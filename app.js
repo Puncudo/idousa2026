@@ -154,7 +154,6 @@ function initTabs() {
       btn.classList.add('active');
       document.getElementById(`view-${btn.dataset.tab}`).classList.add('active');
       if (btn.dataset.tab === 'notes'    && typeof renderNotesTab    === 'function') renderNotesTab();
-      if (btn.dataset.tab === 'payments' && typeof renderPaymentsTab === 'function') renderPaymentsTab();
     });
   });
 }

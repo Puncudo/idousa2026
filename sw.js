@@ -1,4 +1,4 @@
-const CACHE_NAME = 'usa-trip-v1';
+const CACHE_NAME = 'usa-trip-v2';
 const ASSETS = [
   '/',
   '/index.html',
@@ -14,8 +14,6 @@ const ASSETS = [
   '/data/san-francisco.json',
   '/data/silicon-valley.json',
   '/data/tampa.json',
-  '/data/payments.json',
-  '/payments.js',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
 ];

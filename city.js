@@ -20,10 +20,10 @@ let geoCache = JSON.parse(localStorage.getItem('geocache') || '{}');
 function saveGeoCache() { localStorage.setItem('geocache', JSON.stringify(geoCache)); }
 
 const TYPE = {
-  sightseeing: { color: '#c8003a', icon: '🏛️' },
-  food:        { color: '#d97706', icon: '🍽️' },
+  sightseeing: { color: '#2f6fed', icon: '🏛️' },
+  food:        { color: '#0ea5e9', icon: '🍽️' },
   transport:   { color: '#9ca3af', icon: '🚇' },
-  hotel:       { color: '#f0607a', icon: '🏨' },
+  hotel:       { color: '#1e40af', icon: '🏨' },
 };
 
 /* ── Adjacent stop finder ───────────────────────────── */
@@ -804,7 +804,7 @@ function showPreviewPin(coords) {
   _previewMarker = L.marker(coords, {
     icon: L.divIcon({
       className: '',
-      html: `<div style="width:22px;height:22px;border-radius:50%;background:#f59e0b;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.45);animation:pulse-pin .8s infinite alternate"></div>`,
+      html: `<div style="width:22px;height:22px;border-radius:50%;background:#2f6fed;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.45);animation:pulse-pin .8s infinite alternate"></div>`,
       iconSize: [22, 22],
       iconAnchor: [11, 11],
     }),
