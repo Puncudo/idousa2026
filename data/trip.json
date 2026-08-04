@@ -1,0 +1,63 @@
+{
+  "title": "USA 2026",
+  "timeline": [
+    {
+      "type": "flight",
+      "label": "Departure",
+      "date": "2026-10-17",
+      "time": "",
+      "note": "Flight from Tel Aviv to New York"
+    },
+    {
+      "type": "major",
+      "id": "new-york",
+      "name": "New York",
+      "image": "newyork",
+      "arrival": "2026-10-17",
+      "departure": "2026-10-19",
+      "transit": "✈️ Arrive JFK / Newark — AirTrain + subway or taxi to Manhattan"
+    },
+    {
+      "type": "major",
+      "id": "washington-dc",
+      "name": "Washington DC",
+      "image": "washington",
+      "arrival": "2026-10-19",
+      "departure": "2026-10-21",
+      "transit": "🚆 Amtrak train from NYC Penn Station · ~3h"
+    },
+    {
+      "type": "major",
+      "id": "san-francisco",
+      "name": "San Francisco",
+      "image": "sanfrancisco",
+      "arrival": "2026-10-21",
+      "departure": "2026-10-25",
+      "transit": "🏛️ Pentagon visit · ✈️ Flight DCA/IAD → SFO"
+    },
+    {
+      "type": "waypoints",
+      "label": "Day trip from San Francisco",
+      "transit": "🚗 Drive / Caltrain south down the Peninsula",
+      "items": [
+        { "id": "silicon-valley", "name": "Silicon Valley", "image": "siliconvalley", "transit": "~1h · Palo Alto / Mountain View / San Jose" }
+      ]
+    },
+    {
+      "type": "major",
+      "id": "tampa",
+      "name": "Tampa",
+      "image": "tampa",
+      "arrival": "2026-10-25",
+      "departure": "2026-10-27",
+      "transit": "✈️ Flight SFO → TPA · ~6h"
+    },
+    {
+      "type": "flight",
+      "label": "Return Flight",
+      "date": "2026-10-27",
+      "time": "",
+      "note": "Flight home to Tel Aviv"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "new-york",
+  "name": "New York",
+  "center": [40.7580, -73.9855],
+  "zoom": 12,
+  "hotel": {
+    "name": "TBD",
+    "coords": [40.7580, -73.9855],
+    "place": "New York, NY, USA",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=New+York+NY+USA"
+  },
+  "days": [
+    { "date": "2026-10-17", "activities": [
+      { "name": "Arrive in New York", "type": "transport", "time": "" }
+    ] },
+    { "date": "2026-10-18", "activities": [
+      { "name": "Settle in", "type": "hotel", "time": "" },
+      { "name": "NBA game", "type": "sightseeing", "time": "" },
+      { "name": "Israeli Consulate", "type": "sightseeing", "time": "" },
+      { "name": "Dinner", "type": "food", "time": "" }
+    ] }
+  ]
+}

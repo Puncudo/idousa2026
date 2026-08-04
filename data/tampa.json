@@ -1,0 +1,20 @@
+{
+  "id": "tampa",
+  "name": "Tampa",
+  "center": [27.9506, -82.4572],
+  "zoom": 12,
+  "hotel": {
+    "name": "TBD",
+    "coords": [27.9506, -82.4572],
+    "place": "Tampa, FL, USA",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Tampa+FL+USA"
+  },
+  "days": [
+    { "date": "2026-10-25", "activities": [
+      { "name": "Flight to Tampa", "type": "transport", "time": "" }
+    ] },
+    { "date": "2026-10-26", "activities": [
+      { "name": "CENTCOM", "type": "sightseeing", "time": "" }
+    ] }
+  ]
+}

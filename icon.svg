@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="round"><rect width="512" height="512" rx="80"/></clipPath>
+    <path id="star" d="M0,-9 L2.02,-2.78 L8.56,-2.78 L3.27,1.06 L5.29,7.28 L0,3.44 L-5.29,7.28 L-3.27,1.06 L-8.56,-2.78 L-2.02,-2.78 Z"/>
+  </defs>
+  <g clip-path="url(#round)">
+    <rect width="512" height="512" fill="#b31942"/>
+    <g fill="#ffffff">
+      <rect y="39.4" width="512" height="39.4"/>
+      <rect y="118.1" width="512" height="39.4"/>
+      <rect y="196.9" width="512" height="39.4"/>
+      <rect y="275.7" width="512" height="39.4"/>
+      <rect y="354.5" width="512" height="39.4"/>
+      <rect y="433.2" width="512" height="39.4"/>
+    </g>
+    <rect width="256" height="275.7" fill="#0a3161"/>
+    <g fill="#ffffff">
+      <use href="#star" x="21.3" y="27.6"/><use href="#star" x="64" y="27.6"/><use href="#star" x="106.7" y="27.6"/><use href="#star" x="149.3" y="27.6"/><use href="#star" x="192" y="27.6"/><use href="#star" x="234.7" y="27.6"/>
+      <use href="#star" x="42.7" y="55.2"/><use href="#star" x="85.3" y="55.2"/><use href="#star" x="128" y="55.2"/><use href="#star" x="170.7" y="55.2"/><use href="#star" x="213.3" y="55.2"/>
+      <use href="#star" x="21.3" y="82.7"/><use href="#star" x="64" y="82.7"/><use href="#star" x="106.7" y="82.7"/><use href="#star" x="149.3" y="82.7"/><use href="#star" x="192" y="82.7"/><use href="#star" x="234.7" y="82.7"/>
+      <use href="#star" x="42.7" y="110.3"/><use href="#star" x="85.3" y="110.3"/><use href="#star" x="128" y="110.3"/><use href="#star" x="170.7" y="110.3"/><use href="#star" x="213.3" y="110.3"/>
+      <use href="#star" x="21.3" y="137.9"/><use href="#star" x="64" y="137.9"/><use href="#star" x="106.7" y="137.9"/><use href="#star" x="149.3" y="137.9"/><use href="#star" x="192" y="137.9"/><use href="#star" x="234.7" y="137.9"/>
+      <use href="#star" x="42.7" y="165.5"/><use href="#star" x="85.3" y="165.5"/><use href="#star" x="128" y="165.5"/><use href="#star" x="170.7" y="165.5"/><use href="#star" x="213.3" y="165.5"/>
+      <use href="#star" x="21.3" y="193.1"/><use href="#star" x="64" y="193.1"/><use href="#star" x="106.7" y="193.1"/><use href="#star" x="149.3" y="193.1"/><use href="#star" x="192" y="193.1"/><use href="#star" x="234.7" y="193.1"/>
+      <use href="#star" x="42.7" y="220.6"/><use href="#star" x="85.3" y="220.6"/><use href="#star" x="128" y="220.6"/><use href="#star" x="170.7" y="220.6"/><use href="#star" x="213.3" y="220.6"/>
+      <use href="#star" x="21.3" y="248.2"/><use href="#star" x="64" y="248.2"/><use href="#star" x="106.7" y="248.2"/><use href="#star" x="149.3" y="248.2"/><use href="#star" x="192" y="248.2"/><use href="#star" x="234.7" y="248.2"/>
+    </g>
+  </g>
+</svg>

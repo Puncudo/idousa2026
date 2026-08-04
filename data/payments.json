@@ -1,0 +1,3 @@
+[
+  { "id":"1", "name":"Flights", "category":"flights", "amount":0, "currency":"ILS", "paid":false, "paidByOther":false }
+]

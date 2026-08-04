@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0a3161"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="USA 2026"/>
+  <title>USA 2026</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="stylesheet" href="style.css?v=48"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ── Header ── -->
+  <header class="app-header">
+    <div class="header-top">
+      <span class="header-flag">🇺🇸</span>
+      <h1 class="header-title">USA 2026</h1>
+      <span class="header-sub">Dates TBD</span>
+    </div>
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="timeline">
+        <span class="tab-icon">🗽</span> Timeline
+      </button>
+      <button class="tab-btn" data-tab="notes">
+        <span class="tab-icon">📝</span> Notes
+      </button>
+      <button class="tab-btn" data-tab="payments">
+        <span class="tab-icon">💵</span> Payments
+      </button>
+    </nav>
+  </header>
+
+  <!-- ── Main ── -->
+  <main class="app-main">
+
+    <div id="view-timeline" class="view active">
+      <div class="timeline" id="timeline">
+        <p style="color:#7777aa;font-size:14px;padding:40px">Loading trip…</p>
+      </div>
+    </div>
+
+    <div id="view-notes" class="view">
+    </div>
+
+    <div id="view-payments" class="view">
+    </div>
+
+  </main>
+</div>
+
+<button id="hard-refresh-btn" title="Clear cache & refresh" onclick="
+  navigator.serviceWorker.getRegistrations()
+    .then(r => Promise.all(r.map(s => s.unregister())))
+    .then(() => caches.keys())
+    .then(k => Promise.all(k.map(c => caches.delete(c))))
+    .then(() => location.reload(true));
+">↺</button>
+
+<!-- City detail overlay (populated by city.js) -->
+<div id="city-overlay"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="app.js?v=32"></script>
+<script src="city.js?v=43"></script>
+<script src="notes.js?v=1"></script>
+<script src="payments.js?v=2"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "id": "san-francisco",
+  "name": "San Francisco",
+  "center": [37.7749, -122.4194],
+  "zoom": 12,
+  "hotel": {
+    "name": "TBD",
+    "coords": [37.7749, -122.4194],
+    "place": "San Francisco, CA, USA",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=San+Francisco+CA+USA"
+  },
+  "days": [
+    { "date": "2026-10-21", "activities": [
+      { "name": "Pentagon visit", "type": "sightseeing", "time": "" },
+      { "name": "Flight to San Francisco", "type": "transport", "time": "" }
+    ] },
+    { "date": "2026-10-22", "activities": [] },
+    { "date": "2026-10-23", "activities": [] },
+    { "date": "2026-10-24", "activities": [
+      { "name": "Rest day", "type": "hotel", "time": "" }
+    ] }
+  ]
+}
