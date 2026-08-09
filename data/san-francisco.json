@@ -11,13 +11,12 @@
   },
   "days": [
     { "date": "2026-10-21", "activities": [
-      { "name": "Pentagon visit", "type": "sightseeing", "time": "" },
-      { "name": "Flight to San Francisco", "type": "transport", "time": "" }
+      { "name": "Arrive in San Francisco", "type": "transport", "time": "" }
     ] },
-    { "date": "2026-10-22", "activities": [] },
-    { "date": "2026-10-23", "activities": [] },
-    { "date": "2026-10-24", "activities": [
-      { "name": "Rest day", "type": "hotel", "time": "" }
+    { "date": "2026-10-22", "activities": [
+      { "name": "Palantir Technologies (Palo Alto)", "type": "sightseeing", "time": "09:00" },
+      { "name": "The Token Company", "type": "sightseeing", "time": "" },
+      { "name": "Drive / flight to Los Angeles", "type": "transport", "time": "17:00" }
     ] }
   ]
 }

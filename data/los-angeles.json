@@ -1,0 +1,23 @@
+{
+  "id": "los-angeles",
+  "name": "Los Angeles",
+  "center": [34.0522, -118.2437],
+  "zoom": 10,
+  "hotel": {
+    "name": "TBD",
+    "coords": [34.0522, -118.2437],
+    "place": "Los Angeles, CA, USA",
+    "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Los+Angeles+CA+USA"
+  },
+  "days": [
+    { "date": "2026-10-22", "activities": [
+      { "name": "Arrive in Los Angeles", "type": "transport", "time": "" }
+    ] },
+    { "date": "2026-10-23", "activities": [
+      { "name": "Anduril Industries (Costa Mesa)", "type": "sightseeing", "time": "09:30" }
+    ] },
+    { "date": "2026-10-24", "activities": [
+      { "name": "Free day", "type": "hotel", "time": "10:00" }
+    ] }
+  ]
+}

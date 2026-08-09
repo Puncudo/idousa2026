@@ -2,8 +2,28 @@
    city.js — City detail view with map + daily activities
 ═══════════════════════════════════════════════════════ */
 
-/* View-only mode when served from GitHub Pages */
-const IS_VIEW_ONLY = location.hostname.endsWith('.github.io');
+/* Editing is enabled only for signed-in, allowlisted Google accounts (via Store).
+   When Firebase isn't configured, fall back to editable on the local python server. */
+function canEdit() {
+  if (typeof Store !== 'undefined' && Store.isConfigured()) return Store.canEdit();
+  return !location.hostname.endsWith('.github.io');
+}
+
+/* Persist the whole current city document — cloud when configured, else local server. */
+function persistCity() {
+  if (!currentCityId || !currentCity) return;
+  if (typeof Store !== 'undefined' && Store.isConfigured()) {
+    tlog(`persistCity: ${currentCityId} → cloud`);
+    Store.saveCity(currentCityId, currentCity);
+  } else {
+    tlog(`persistCity: ${currentCityId} → local server`);
+    fetch('/api/save-json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ city: currentCityId, content: currentCity }),
+    }).catch(() => {});
+  }
+}
 
 let cityMap      = null;
 let cityMarkers  = [];   // array of { marker, act, color, num }
@@ -16,10 +36,11 @@ let currentStopItem = null;
 let pickMode     = null; // { act, resolve } when user is tapping map to pick
 
 /* Geocode cache — localStorage */
-let geoCache = JSON.parse(localStorage.getItem('geocache') || '{}');
-function saveGeoCache() { localStorage.setItem('geocache', JSON.stringify(geoCache)); }
+let geoCache = JSON.parse(localStorage.getItem('usa-geocache') || '{}');
+function saveGeoCache() { localStorage.setItem('usa-geocache', JSON.stringify(geoCache)); }
 
 const TYPE = {
+  work:        { color: '#7c3aed', icon: '💼' },
   sightseeing: { color: '#2f6fed', icon: '🏛️' },
   food:        { color: '#0ea5e9', icon: '🍽️' },
   transport:   { color: '#9ca3af', icon: '🚇' },
@@ -41,7 +62,7 @@ function getAdjacentStops(currentId) {
 }
 
 /* ── Day note — rich text (localStorage) ────────────── */
-function dayNoteKey(date) { return `daynote-${currentCityId}-${date}`; }
+function dayNoteKey(date) { return `usa-daynote-${currentCityId}-${date}`; }
 
 /* Strip HTML down to safe inline tags only */
 function _sanitizeNoteHtml(html) {
@@ -116,7 +137,10 @@ async function openCity(stopItem) {
   currentStopItem = stopItem;
   const filename = stopItem.id;
   let data;
-  try {
+  // Cloud doc is the source of truth once it exists; bundled JSON is the seed/fallback.
+  data = await Store.loadCity(filename);
+  if (!data) try {
+    tlog(`openCity(${filename}): fetching bundled JSON`);
     const res = await fetch(`./data/${filename}.json?_=${Date.now()}`);
     if (!res.ok) throw new Error();
     data = await res.json();
@@ -244,7 +268,7 @@ function buildCityDOM(data) {
                   <button class="rte-btn" onclick="execRteCmd('italic')" title="Italic"><i>I</i></button>
                   <button class="rte-btn" onclick="execRteCmd('insertUnorderedList')" title="Bullets">•</button>
                 </div>
-                ${IS_VIEW_ONLY ? '' : '<button class="day-note-edit-btn" id="day-note-edit-btn" onclick="toggleNoteEdit()">Edit</button>'}
+                ${canEdit() ? '<button class="day-note-edit-btn" id="day-note-edit-btn" onclick="toggleNoteEdit()">Edit</button>' : ''}
               </div>
             </div>
             <div class="day-note-body">
@@ -256,6 +280,7 @@ function buildCityDOM(data) {
 
           <div class="act-panel-title" id="act-panel-title">
             <span id="act-panel-date">— select a day —</span>
+            <button class="act-add-btn" id="act-add-btn" onclick="openActEditor(-1)" title="Add activity" style="display:none">＋ Add</button>
             <button class="act-compact-btn" id="act-compact-btn" onclick="toggleCompact()" title="Compact view">⊟</button>
           </div>
           <div id="day-saved-links"></div>
@@ -343,20 +368,54 @@ function buildCityDOM(data) {
         <button class="loc-close" onclick="closeLocModal()">✕</button>
       </div>
     </div>
+
+    <!-- Activity editor modal -->
+    <div class="loc-modal" id="actedit-modal" style="display:none">
+      <div class="loc-modal-box">
+        <div class="loc-modal-title" id="actedit-title">Edit activity</div>
+        <label class="loc-label">Name</label>
+        <input class="loc-input" id="actedit-name" type="text" placeholder="Activity name"/>
+        <label class="loc-label" style="margin-top:8px">Type</label>
+        <select class="loc-input" id="actedit-type">
+          <option value="work">💼 Work</option>
+          <option value="sightseeing">🏛️ Sightseeing</option>
+          <option value="food">🍽️ Food</option>
+          <option value="transport">🚇 Transport</option>
+          <option value="hotel">🏨 Hotel</option>
+        </select>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            <label class="loc-label" style="margin-top:8px">Start</label>
+            <input class="loc-input" id="actedit-time" type="time"/>
+          </div>
+          <div style="flex:1">
+            <label class="loc-label" style="margin-top:8px">End</label>
+            <input class="loc-input" id="actedit-timeend" type="time"/>
+          </div>
+        </div>
+        <label class="loc-label" style="margin-top:8px">Notes <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
+        <textarea class="loc-input" id="actedit-notes" rows="2" placeholder="Notes…"></textarea>
+        <div class="loc-actions">
+          <button class="loc-btn loc-btn-secondary loc-btn-danger" id="actedit-delete" onclick="deleteActEditor()">Delete</button>
+          <button class="loc-btn loc-btn-primary" onclick="saveActEditor()">Save</button>
+        </div>
+        <button class="loc-close" onclick="closeActEditor()">✕</button>
+      </div>
+    </div>
   `;
 
   /* ── Populate city note (after innerHTML set, to avoid XSS) ── */
   const _cnEl = document.getElementById('city-note-el');
   if (_cnEl) {
-    const _cnStored = localStorage.getItem(`city-note-${currentCityId}`);
+    const _cnStored = localStorage.getItem(`usa-city-note-${currentCityId}`);
     /* Use saved note if exists; otherwise fall back to the JSON default */
     _cnEl.innerHTML = _cnStored || (data.cityNote
       ? data.cityNote.replace(/\n/g, '<br>')
       : '');
     _cnEl.addEventListener('input', () => {
       const v = _cnEl.innerHTML.trim();
-      if (v && v !== '<br>') localStorage.setItem(`city-note-${currentCityId}`, v);
-      else localStorage.removeItem(`city-note-${currentCityId}`);
+      if (v && v !== '<br>') localStorage.setItem(`usa-city-note-${currentCityId}`, v);
+      else localStorage.removeItem(`usa-city-note-${currentCityId}`);
     });
     _cnEl.addEventListener('paste', e => {
       e.preventDefault();
@@ -446,6 +505,9 @@ async function selectDay(dateStr) {
   const dateSpan = document.getElementById('act-panel-date');
   if (dateSpan) dateSpan.textContent = fmtDate(dateStr);
 
+  const addBtn = document.getElementById('act-add-btn');
+  if (addBtn) addBtn.style.display = canEdit() ? '' : 'none';
+
   // Saved links bar
   const savedEl = document.getElementById('day-saved-links');
   if (savedEl) {
@@ -533,6 +595,7 @@ function renderActivityList(activities, container) {
     const card = document.createElement('div');
     card.className = 'act-card';
     card.id = `act-card-${i}`;
+    card.dataset.idx = i;
 
     /* ── Left col: badge + connector line ── */
     const leftDiv = document.createElement('div');
@@ -602,7 +665,7 @@ function renderActivityList(activities, container) {
       foot.appendChild(link);
     }
 
-    if (act.type !== 'transport' && !IS_VIEW_ONLY) {
+    if (act.type !== 'transport' && canEdit()) {
       const locBtn = document.createElement('button');
       locBtn.className = `act-icon-btn ${act.coords ? '' : 'act-icon-btn-missing'}`;
       locBtn.title = act.coords ? 'Edit location' : 'Set location';
@@ -625,6 +688,20 @@ function renderActivityList(activities, container) {
         photoBtn.addEventListener('click', e => { e.stopPropagation(); openPhotoModal(act); });
         foot.appendChild(photoBtn);
       }
+    }
+
+    /* ── Editor controls (all activity types) ── */
+    if (canEdit()) {
+      const editBtn = document.createElement('button');
+      editBtn.className = 'act-icon-btn';
+      editBtn.title = 'Edit activity';
+      editBtn.textContent = '✏️';
+      editBtn.addEventListener('click', e => { e.stopPropagation(); openActEditor(i); });
+      foot.appendChild(editBtn);
+
+      // Whole card reorders by drag: long-press on touch, click-drag on mouse.
+      card.classList.add('act-draggable');
+      card.addEventListener('pointerdown', e => onCardPointerDown(e, card));
     }
 
     rightDiv.appendChild(foot);
@@ -654,6 +731,7 @@ function renderActivityList(activities, container) {
     if (currentPin) {
       card.style.cursor = 'pointer';
       card.addEventListener('click', e => {
+        if (_suppressNextClick) { _suppressNextClick = false; return; }
         if (e.target.closest('button') || e.target.closest('a') || e.target.closest('label')) return;
         focusPin(currentPin);
       });
@@ -1023,16 +1101,7 @@ async function locSave() {
   /* update geocache */
   if (place) { geoCache[place] = _locCoords; saveGeoCache(); }
 
-  /* save to JSON via server */
-  try {
-    await fetch('/api/save-coords', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ city: currentCityId, name: _locAct.name, coords: _locCoords, place, mapsUrl: _locMapsUrl }),
-    });
-  } catch {
-    console.warn('Server not available — coords saved in memory only');
-  }
+  persistCity();
 
   clearPreviewPin();
   closeLocModal();
@@ -1046,38 +1115,319 @@ async function locSave() {
    PHOTO UPLOAD / REMOVE
 ══════════════════════════════════════════════════════ */
 async function uploadPhoto(act, file) {
-  const fd = new FormData();
-  fd.append('city', currentCityId);
-  fd.append('name', act.name);
-  fd.append('photo', file);
   try {
-    const res = await fetch('/api/upload-photo', { method: 'POST', body: fd });
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    act.photo = data.photo;
-  } catch {
-    alert('Photo upload failed — is the server running?');
+    if (Store.isConfigured()) {
+      act.photo = await Store.uploadPhoto(currentCityId, file);
+    } else {
+      const fd = new FormData();
+      fd.append('city', currentCityId);
+      fd.append('name', act.name);
+      fd.append('photo', file);
+      const res = await fetch('/api/upload-photo', { method: 'POST', body: fd });
+      if (!res.ok) throw new Error();
+      act.photo = (await res.json()).photo;
+    }
+  } catch (e) {
+    console.error('[photo] upload failed', e);
+    alert('Couldn\u2019t upload the photo. Please try again.');
     return;
   }
+  persistCity();
   const activeDate = document.querySelector('.cdt-active')?.dataset?.date;
   if (activeDate) selectDay(activeDate);
 }
 
 async function removePhoto(act) {
   try {
-    const res = await fetch('/api/delete-photo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ city: currentCityId, name: act.name }),
-    });
-    if (!res.ok) throw new Error();
-    delete act.photo;
+    if (Store.isConfigured()) {
+      await Store.deletePhoto(act.photo);
+      delete act.photo;
+    } else {
+      const res = await fetch('/api/delete-photo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ city: currentCityId, name: act.name }),
+      });
+      if (!res.ok) throw new Error();
+      delete act.photo;
+    }
   } catch {
-    alert('Delete failed — is the server running?');
+    alert('Couldn\u2019t remove the photo. Please try again.');
     return;
   }
+  persistCity();
   const activeDate = document.querySelector('.cdt-active')?.dataset?.date;
   if (activeDate) selectDay(activeDate);
+}
+
+/* ══════════════════════════════════════════════════════
+   HOTEL PANEL
+══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   ACTIVITY EDITOR
+══════════════════════════════════════════════════════ */
+let _editActArr = null, _editActIdx = -1;
+
+function _currentDayActivities() {
+  const day = currentCity?.days.find(d => d.date === _currentDayDate);
+  if (!day) return null;
+  if (!day.activities) day.activities = [];
+  return day.activities;
+}
+
+function openActEditor(idx) {
+  if (!canEdit()) return;
+  const arr = _currentDayActivities();
+  if (!arr) { alert('Select a day first.'); return; }
+  _editActArr = arr;
+  _editActIdx = idx;
+  const act = idx >= 0 ? arr[idx] : { name: '', type: 'sightseeing', time: '', timeEnd: '', notes: '' };
+  document.getElementById('actedit-title').textContent = idx >= 0 ? 'Edit activity' : 'Add activity';
+  document.getElementById('actedit-name').value = act.name || '';
+  document.getElementById('actedit-type').value = act.type || 'sightseeing';
+  document.getElementById('actedit-time').value = act.time || '';
+  document.getElementById('actedit-timeend').value = act.timeEnd || '';
+  document.getElementById('actedit-notes').value = act.notes || '';
+  document.getElementById('actedit-delete').style.display = idx >= 0 ? '' : 'none';
+  document.getElementById('actedit-modal').style.display = 'flex';
+}
+
+function closeActEditor() {
+  document.getElementById('actedit-modal').style.display = 'none';
+  _editActArr = null; _editActIdx = -1;
+}
+
+function saveActEditor() {
+  if (!_editActArr) return;
+  const name = document.getElementById('actedit-name').value.trim();
+  if (!name) { alert('Name is required.'); return; }
+  const rec = _editActIdx >= 0 ? _editActArr[_editActIdx] : {};
+  rec.name    = name;
+  rec.type    = document.getElementById('actedit-type').value;
+  rec.time    = document.getElementById('actedit-time').value.trim();
+  rec.timeEnd = document.getElementById('actedit-timeend').value.trim();
+  const notes = document.getElementById('actedit-notes').value.trim();
+  if (notes) rec.notes = notes; else delete rec.notes;
+  if (_editActIdx < 0) _editActArr.push(rec);
+  persistCity();
+  closeActEditor();
+  if (_currentDayDate) selectDay(_currentDayDate);
+}
+
+function deleteActEditor() {
+  if (!_editActArr || _editActIdx < 0) return;
+  if (!confirm('Delete this activity?')) return;
+  const act = _editActArr[_editActIdx];
+  if (act?.photo && typeof Store !== 'undefined' && Store.isConfigured()) Store.deletePhoto(act.photo);
+  _editActArr.splice(_editActIdx, 1);
+  persistCity();
+  closeActEditor();
+  if (_currentDayDate) selectDay(_currentDayDate);
+}
+
+/* ── Drag-to-reorder: whole card (long-press on touch, click-drag on mouse) ── */
+let _drag = null;        // active drag { card, container }
+let _dragArm = null;     // pending arm before drag begins
+let _suppressNextClick = false;
+const _DRAG_THRESHOLD = 8;
+const _LONGPRESS_MS = 260;
+
+function onCardPointerDown(e, card) {
+  if (!canEdit()) return;
+  // Let taps on buttons/links/inputs behave normally.
+  if (e.target.closest('button, a, input, select, label, textarea')) return;
+  const container = document.getElementById('act-list');
+  if (!container) return;
+  const isTouch = e.pointerType !== 'mouse';
+  _dragArm = { card, container, startX: e.clientX, startY: e.clientY, pointerId: e.pointerId, isTouch, armed: false, timer: null };
+  if (isTouch) _dragArm.timer = setTimeout(beginDrag, _LONGPRESS_MS);
+  document.addEventListener('pointermove', onArmMove);
+  document.addEventListener('pointerup', onArmUp);
+  document.addEventListener('pointercancel', onArmUp);
+}
+
+function beginDrag() {
+  if (!_dragArm) return;
+  const { card, pointerId } = _dragArm;
+  card.classList.add('act-dragging');
+  try { card.setPointerCapture(pointerId); } catch {}
+  _drag = { card, container: _dragArm.container };
+  _dragArm.armed = true;
+}
+
+function onArmMove(e) {
+  if (!_dragArm) return;
+  if (!_dragArm.armed) {
+    const dx = Math.abs(e.clientX - _dragArm.startX);
+    const dy = Math.abs(e.clientY - _dragArm.startY);
+    if (_dragArm.isTouch) {
+      // Movement before the long-press = the user is scrolling → let them.
+      if (dx > _DRAG_THRESHOLD || dy > _DRAG_THRESHOLD) cancelArm();
+      return;
+    }
+    if (dx > _DRAG_THRESHOLD || dy > _DRAG_THRESHOLD) beginDrag();
+    else return;
+  }
+  e.preventDefault();
+  const { card, container } = _drag;
+  const y = e.clientY;
+  const others = [...container.querySelectorAll('.act-card:not(.act-dragging)')];
+  let ref = null;
+  for (const c of others) {
+    const r = c.getBoundingClientRect();
+    if (y < r.top + r.height / 2) { ref = c; break; }
+  }
+  if (ref) container.insertBefore(card, ref);
+  else container.appendChild(card);
+}
+
+function cancelArm() {
+  if (_dragArm?.timer) clearTimeout(_dragArm.timer);
+  _removeArmListeners();
+  _dragArm = null;
+}
+
+function onArmUp() {
+  const dragging = !!(_dragArm && _dragArm.armed && _drag);
+  if (_dragArm?.timer) clearTimeout(_dragArm.timer);
+  _removeArmListeners();
+  _dragArm = null;
+  if (dragging) commitDrag();
+}
+
+function _removeArmListeners() {
+  document.removeEventListener('pointermove', onArmMove);
+  document.removeEventListener('pointerup', onArmUp);
+  document.removeEventListener('pointercancel', onArmUp);
+}
+
+function commitDrag() {
+  const { card, container } = _drag;
+  card.classList.remove('act-dragging');
+  _suppressNextClick = true;
+  setTimeout(() => { _suppressNextClick = false; }, 350);
+  const arr = _currentDayActivities();
+  if (arr) {
+    const order = [...container.querySelectorAll('.act-card')].map(c => +c.dataset.idx);
+    const reordered = order.map(i => arr[i]).filter(Boolean);
+    if (reordered.length === arr.length) {
+      arr.length = 0;
+      reordered.forEach(a => arr.push(a));
+      persistCity();
+      tlog('reorder →', order.join(','));
+    }
+  }
+  _drag = null;
+  if (_currentDayDate) selectDay(_currentDayDate);
+}
+
+/* ══════════════════════════════════════════════════════
+   AUTH UI
+══════════════════════════════════════════════════════ */
+function showAuthScreen() {
+  const s = document.getElementById('auth-screen');
+  if (s) s.style.display = 'flex';
+}
+function hideAuthScreen() {
+  const s = document.getElementById('auth-screen');
+  if (s) s.style.display = 'none';
+}
+
+function handleAuthClick() {
+  if (typeof Store === 'undefined') return;
+  if (Store.isSignedIn()) Store.signOut();
+  else showAuthScreen();
+}
+
+async function signInWithGoogle() {
+  const status = document.getElementById('auth-status');
+  const btn = document.getElementById('auth-google-btn');
+  if (status) { status.style.color = '#6b7280'; status.textContent = 'Opening Google…'; }
+  if (btn) btn.disabled = true;
+  const res = await Store.signIn();
+  if (btn) btn.disabled = false;
+  if (!res || !res.ok) {
+    console.error('[auth] sign-in failed:', res && (res.code || res.error));
+    if (status) { status.style.color = '#ef4444'; status.textContent = _friendlyAuthError(res); }
+  } else if (status) {
+    status.textContent = '';
+  }
+  // Success/approval handling happens in _updateAuthUI (fired by onAuthChange).
+}
+
+function _friendlyAuthError(res) {
+  const code = (res && res.code) || '';
+  if (code.includes('popup-blocked')) return 'Please allow pop-ups and try again.';
+  if (code.includes('popup-closed') || code.includes('cancelled-popup') || code.includes('canceled'))
+    return 'Sign-in was canceled.';
+  return 'Couldn\u2019t sign in. Please try again.';
+}
+
+async function refreshApproval() {
+  const status = document.getElementById('auth-status');
+  if (status) { status.style.color = '#6b7280'; status.textContent = 'Checking…'; }
+  await Store.recheckApproval();
+}
+
+function _updateAuthUI(user) {
+  const btn     = document.getElementById('auth-btn');
+  const gbtn    = document.getElementById('auth-google-btn');
+  const sub     = document.getElementById('auth-sub');
+  const status  = document.getElementById('auth-status');
+  const signout = document.getElementById('auth-signout-btn');
+  const recheck = document.getElementById('auth-recheck-btn');
+
+  // No cloud configured → don't gate (local dev fallback).
+  if (!Store.isConfigured()) {
+    if (btn) btn.style.display = 'none';
+    hideAuthScreen();
+    return;
+  }
+
+  if (btn) {
+    btn.style.display = '';
+    btn.textContent = user ? 'Sign out' : 'Sign in';
+    btn.title = user ? (user.email || '') : 'Sign in';
+  }
+
+  if (!user) {
+    // Locked — must sign in to enter the app.
+    tlog('gate: locked (not signed in)');
+    if (sub) sub.textContent = 'Sign in to continue';
+    if (gbtn) gbtn.style.display = '';
+    if (signout) signout.style.display = 'none';
+    if (recheck) recheck.style.display = 'none';
+    if (status) status.textContent = '';
+    showAuthScreen();
+  } else if (!Store.isApproved()) {
+    // Signed in but not yet approved. Keep the UI friendly; log the real reason.
+    tlog('gate: pending approval for', user.email);
+    const err = (Store.approvalError && Store.approvalError()) || '';
+    if (err) console.warn('[auth] approval not readable:', err, '— verify Firestore rules are published.');
+    if (sub) sub.textContent = 'Waiting for approval';
+    if (gbtn) gbtn.style.display = 'none';
+    if (signout) signout.style.display = '';
+    if (recheck) recheck.style.display = '';
+    if (status) {
+      status.style.color = '#b45309';
+      status.textContent = 'Your account isn\u2019t approved yet. Ask the trip owner for access.';
+    }
+    showAuthScreen();
+  } else {
+    // Approved — unlock the app.
+    tlog('gate: approved — unlocking app for', user.email);
+    if (recheck) recheck.style.display = 'none';
+    hideAuthScreen();
+  }
+
+  // Re-render the open day so edit controls appear/disappear.
+  if (currentCityId && _currentDayDate) selectDay(_currentDayDate);
+}
+
+if (typeof Store !== 'undefined') {
+  Store.onAuthChange(_updateAuthUI);
+  // Gate immediately on load until auth resolves (only when cloud is configured).
+  if (Store.isConfigured()) showAuthScreen(); else hideAuthScreen();
 }
 
 /* ══════════════════════════════════════════════════════
@@ -1221,16 +1571,7 @@ async function saveHotel() {
   const hotelBtn = document.querySelector('.city-hotel');
   if (hotelBtn) hotelBtn.title = hotel.name;
 
-  /* Persist via server */
-  try {
-    await fetch('/api/save-hotel', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ city: currentCityId, hotel }),
-    });
-  } catch {
-    console.warn('Server not available — hotel saved in memory only');
-  }
+  persistCity();
 
   clearPreviewPin();
   closeHotelPanel();

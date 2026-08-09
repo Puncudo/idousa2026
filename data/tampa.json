@@ -11,10 +11,10 @@
   },
   "days": [
     { "date": "2026-10-25", "activities": [
-      { "name": "Flight to Tampa", "type": "transport", "time": "" }
+      { "name": "Flight to Tampa", "type": "transport", "time": "12:00" }
     ] },
     { "date": "2026-10-26", "activities": [
-      { "name": "CENTCOM", "type": "sightseeing", "time": "" }
+      { "name": "CENTCOM", "type": "sightseeing", "time": "09:00" }
     ] }
   ]
 }

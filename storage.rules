@@ -1,0 +1,26 @@
+rules_version = '2';
+
+// Storage security rules — USA Trip 2026
+// Paste into Firebase Console → Storage → Rules → Publish.
+// Approvals are shared with Firestore (the editors/{email} collection).
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // True when the signed-in, verified user has an approved editors/{email} doc.
+    function isEditor() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && firestore.exists(/databases/(default)/documents/editors/$(request.auth.token.email.lower()))
+        && firestore.get(/databases/(default)/documents/editors/$(request.auth.token.email.lower())).data.approved == true;
+    }
+
+    // Activity photos require an approved account to read or upload (images, <10MB).
+    match /photos/{cityId}/{fileName} {
+      allow read: if isEditor();
+      allow write: if isEditor()
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

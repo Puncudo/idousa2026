@@ -2087,3 +2087,104 @@ body {
   .pay-summary { grid-template-columns: repeat(2, 1fr); }
   .pay-card-val { font-size: 14px; }
 }
+
+/* ── Auth + activity-editor controls ── */
+.auth-btn {
+  margin-inline-start: auto;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.auth-btn:hover { background: rgba(255,255,255,0.28); }
+
+.act-add-btn {
+  background: #1d4ed8;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.act-add-btn:hover { filter: brightness(1.1); }
+
+.loc-btn-danger { color: #ef4444; }
+select.loc-input { appearance: auto; }
+
+/* ── Drag-to-reorder (whole card) ── */
+.act-draggable {
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.act-draggable:active { cursor: grabbing; }
+.act-card.act-dragging {
+  opacity: 0.7;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  background: var(--surface2, #f3f4f6);
+}
+
+/* ── Phone-friendly time inputs (16px avoids iOS focus-zoom) ── */
+#actedit-time, #actedit-timeend {
+  font-size: 16px;
+  min-height: 44px;
+}
+
+/* ── Sign-in screen ── */
+.auth-screen {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(10,49,97,0.97);
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.auth-card {
+  position: relative;
+  background: #fff; border-radius: 20px;
+  padding: 34px 28px 28px;
+  width: 100%; max-width: 360px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.auth-close {
+  position: absolute; top: 12px; right: 14px;
+  background: none; border: none; font-size: 18px;
+  color: #9ca3af; cursor: pointer; line-height: 1;
+}
+.auth-flag { font-size: 46px; }
+.auth-title { margin: 6px 0 4px; font-size: 26px; color: #0a3161; }
+.auth-sub { margin: 0 0 22px; color: #6b7280; font-size: 14px; }
+.auth-google-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  width: 100%; justify-content: center;
+  background: #fff; color: #3c4043;
+  border: 1px solid #dadce0; border-radius: 10px;
+  padding: 12px 16px; font-size: 15px; font-weight: 600;
+  cursor: pointer;
+}
+.auth-google-btn:hover { background: #f7f8f8; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.auth-google-btn:disabled { opacity: 0.6; cursor: default; }
+.auth-g {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; border: 1px solid #dadce0;
+  color: #4285F4; font-weight: 800; font-family: Arial, sans-serif;
+}
+.auth-status { margin-top: 14px; font-size: 13px; min-height: 18px; color: #ef4444; }
+.auth-recheck-btn {
+  margin-top: 14px; width: 100%;
+  background: #0a3161; color: #fff; border: none;
+  border-radius: 10px; padding: 11px 16px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.auth-recheck-btn:hover { filter: brightness(1.12); }
+.auth-signout-btn {
+  margin-top: 14px; background: none; border: none;
+  color: #6b7280; font-size: 13px; cursor: pointer; text-decoration: underline;
+}

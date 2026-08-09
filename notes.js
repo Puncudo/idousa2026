@@ -63,6 +63,6 @@ function renderNotesTab() {
     });
   }
 
-  wireNote(document.getElementById('gnote'), 'global-note');
-  stops.forEach(s => wireNote(document.getElementById(`cnote-${s.id}`), `city-note-${s.id}`, s.defaultNote));
+  wireNote(document.getElementById('gnote'), 'usa-global-note');
+  stops.forEach(s => wireNote(document.getElementById(`cnote-${s.id}`), `usa-city-note-${s.id}`, s.defaultNote));
 }

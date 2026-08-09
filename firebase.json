@@ -1,0 +1,22 @@
+{
+  "hosting": {
+    "site": "october-2026",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*",
+      "**/node_modules/**",
+      "server.py",
+      "*.rules",
+      "**/*.xlsx",
+      "README*.md"
+    ],
+    "headers": [
+      {
+        "source": "/sw.js",
+        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+      }
+    ]
+  }
+}

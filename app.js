@@ -7,7 +7,7 @@ const PLACES = {
   newyork:       { emoji: '🗽', color: '#e8eefc', accent: '#1d4ed8' },
   washington:    { emoji: '🏛️', color: '#f0e8fc', accent: '#6d28d9' },
   sanfrancisco:  { emoji: '🌉', color: '#fce8ee', accent: '#e8002d' },
-  siliconvalley: { emoji: '💻', color: '#e6f4f8', accent: '#0277bd' },
+  losangeles:    { emoji: '🎬', color: '#fdeede', accent: '#f57c00' },
   tampa:         { emoji: '🌴', color: '#e8f5e9', accent: '#2e7d32' },
 };
 

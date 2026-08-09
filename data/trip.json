@@ -5,7 +5,7 @@
       "type": "flight",
       "label": "Departure",
       "date": "2026-10-17",
-      "time": "",
+      "time": "23:30",
       "note": "Flight from Tel Aviv to New York"
     },
     {
@@ -13,9 +13,9 @@
       "id": "new-york",
       "name": "New York",
       "image": "newyork",
-      "arrival": "2026-10-17",
+      "arrival": "2026-10-18",
       "departure": "2026-10-19",
-      "transit": "✈️ Arrive JFK / Newark — AirTrain + subway or taxi to Manhattan"
+      "transit": "✈️ Arrive JFK / Newark 06:30 — AirTrain + subway or taxi to Manhattan"
     },
     {
       "type": "major",
@@ -32,16 +32,17 @@
       "name": "San Francisco",
       "image": "sanfrancisco",
       "arrival": "2026-10-21",
-      "departure": "2026-10-25",
+      "departure": "2026-10-22",
       "transit": "🏛️ Pentagon visit · ✈️ Flight DCA/IAD → SFO"
     },
     {
-      "type": "waypoints",
-      "label": "Day trip from San Francisco",
-      "transit": "🚗 Drive / Caltrain south down the Peninsula",
-      "items": [
-        { "id": "silicon-valley", "name": "Silicon Valley", "image": "siliconvalley", "transit": "~1h · Palo Alto / Mountain View / San Jose" }
-      ]
+      "type": "major",
+      "id": "los-angeles",
+      "name": "Los Angeles",
+      "image": "losangeles",
+      "arrival": "2026-10-22",
+      "departure": "2026-10-25",
+      "transit": "🚗 Drive / ✈️ flight SFO → LAX"
     },
     {
       "type": "major",
@@ -50,7 +51,7 @@
       "image": "tampa",
       "arrival": "2026-10-25",
       "departure": "2026-10-27",
-      "transit": "✈️ Flight SFO → TPA · ~6h"
+      "transit": "✈️ Flight LAX → TPA"
     },
     {
       "type": "flight",

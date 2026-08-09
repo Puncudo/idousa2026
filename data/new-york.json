@@ -10,13 +10,17 @@
     "mapsUrl": "https://www.google.com/maps/search/?api=1&query=New+York+NY+USA"
   },
   "days": [
-    { "date": "2026-10-17", "activities": [
-      { "name": "Arrive in New York", "type": "transport", "time": "" }
-    ] },
     { "date": "2026-10-18", "activities": [
-      { "name": "Settle in", "type": "hotel", "time": "" },
+      { "name": "Arrive in New York", "type": "transport", "time": "06:30" },
+      { "name": "Settle in / leisure", "type": "hotel", "time": "10:00" },
       { "name": "NBA game", "type": "sightseeing", "time": "" },
+      { "name": "Dinner", "type": "food", "time": "" }
+    ] },
+    { "date": "2026-10-19", "activities": [
+      { "name": "SambaNova Systems", "type": "sightseeing", "time": "09:00" },
+      { "name": "Oracle (NY)", "type": "sightseeing", "time": "" },
       { "name": "Israeli Consulate", "type": "sightseeing", "time": "" },
+      { "name": "Train to Washington DC", "type": "transport", "time": "18:00" },
       { "name": "Dinner", "type": "food", "time": "" }
     ] }
   ]

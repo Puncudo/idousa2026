@@ -1,4 +1,4 @@
-const CACHE_NAME = 'usa-trip-v2';
+const CACHE_NAME = 'usa-trip-v4';
 const ASSETS = [
   '/',
   '/index.html',
@@ -6,13 +6,15 @@ const ASSETS = [
   '/app.js',
   '/city.js',
   '/notes.js',
+  '/firebase-config.js',
+  '/store.js',
   '/manifest.json',
   '/icon.svg',
   '/data/trip.json',
   '/data/new-york.json',
   '/data/washington-dc.json',
   '/data/san-francisco.json',
-  '/data/silicon-valley.json',
+  '/data/los-angeles.json',
   '/data/tampa.json',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
@@ -37,6 +39,10 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   // Never intercept POST requests or API calls
   if (e.request.method !== 'GET' || e.request.url.includes('/api/')) return;
+
+  // Only handle same-origin GETs; let the browser handle cross-origin
+  // requests (Firebase auth/Firestore/Storage, CDN scripts) untouched.
+  if (new URL(e.request.url).origin !== self.location.origin) return;
 
   // Hard refresh (Ctrl+Shift+R) — bypass SW cache entirely, fetch fresh and update cache
   if (e.request.cache === 'reload') {

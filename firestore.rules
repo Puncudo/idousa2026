@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// Firestore security rules — USA Trip 2026
+// Paste into Firebase Console → Firestore Database → Rules → Publish.
+//
+// APPROVING EDITORS (no code changes needed):
+//   Firestore → Data → create a collection "editors" → add a document whose
+//   Document ID is the person's Google email (e.g. friend@gmail.com) with field:
+//        approved (boolean) = true
+//   Set approved=false or delete the doc to revoke access.
+//   Do this FIRST for your own email so you can get in.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // True when the signed-in, verified user has an approved editors/{email} doc.
+    function isEditor() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/editors/$(request.auth.token.email.lower()))
+        && get(/databases/$(database)/documents/editors/$(request.auth.token.email.lower())).data.approved == true;
+    }
+
+    // The whole trip requires an approved account to read or write.
+    match /cities/{cityId} {
+      allow read, write: if isEditor();
+    }
+
+    // Users may read only their own approval doc; approvals are managed in the console.
+    match /editors/{email} {
+      allow read: if request.auth != null && request.auth.token.email.lower() == email;
+      allow write: if false;
+    }
+  }
+}

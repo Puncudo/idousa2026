@@ -15,7 +15,11 @@
       { "name": "Dinner", "type": "food", "time": "" }
     ] },
     { "date": "2026-10-20", "activities": [
-      { "name": "Oracle", "type": "sightseeing", "time": "" }
+      { "name": "Oracle", "type": "sightseeing", "time": "09:30" }
+    ] },
+    { "date": "2026-10-21", "activities": [
+      { "name": "The Pentagon", "type": "sightseeing", "time": "09:00" },
+      { "name": "Flight to San Francisco", "type": "transport", "time": "18:00" }
     ] }
   ]
 }

@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="USA 2026"/>
   <title>USA 2026</title>
   <link rel="manifest" href="manifest.json"/>
-  <link rel="stylesheet" href="style.css?v=49"/>
+  <link rel="stylesheet" href="style.css?v=54"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 </head>
 <body>
@@ -22,6 +22,7 @@
       <span class="header-flag">🇺🇸</span>
       <h1 class="header-title">USA 2026</h1>
       <span class="header-sub">Dates TBD</span>
+      <button id="auth-btn" class="auth-btn" onclick="handleAuthClick()" style="display:none">Sign in</button>
     </div>
     <nav class="tab-nav">
       <button class="tab-btn active" data-tab="timeline">
@@ -59,10 +60,34 @@
 <!-- City detail overlay (populated by city.js) -->
 <div id="city-overlay"></div>
 
+<!-- Sign-in screen -->
+<div id="auth-screen" class="auth-screen" style="display:none">
+  <div class="auth-card">
+    <div class="auth-flag">🇺🇸</div>
+    <h2 class="auth-title">USA 2026</h2>
+    <p class="auth-sub" id="auth-sub">Sign in to continue</p>
+    <button class="auth-google-btn" id="auth-google-btn" onclick="signInWithGoogle()">
+      <span class="auth-g">G</span> Sign in with Google
+    </button>
+    <div class="auth-status" id="auth-status"></div>
+    <button class="auth-recheck-btn" id="auth-recheck-btn" onclick="refreshApproval()" style="display:none">Check again</button>
+    <button class="auth-signout-btn" id="auth-signout-btn" onclick="Store.signOut()" style="display:none">Use a different account</button>
+  </div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+
+<!-- Firebase (compat SDK — exposes global `firebase`) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="firebase-config.js?v=1"></script>
+<script src="store.js?v=8"></script>
+
 <script src="app.js?v=32"></script>
-<script src="city.js?v=44"></script>
+<script src="city.js?v=53"></script>
 <script src="notes.js?v=1"></script>
 </body>
 </html>
