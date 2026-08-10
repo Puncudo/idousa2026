@@ -5,8 +5,43 @@
 /* Editing is enabled only for signed-in, allowlisted Google accounts (via Store).
    When Firebase isn't configured, fall back to editable on the local python server. */
 function canEdit() {
+  if (!isEditMode()) return false;                 // view mode → read-only even for editors
   if (typeof Store !== 'undefined' && Store.isConfigured()) return Store.canEdit();
   return !location.hostname.endsWith('.github.io');
+}
+
+/* ── Edit / View mode toggle (default: edit) ──
+   Only an approved editor can actually edit; this just toggles the UI.
+   Defaults to edit mode unless the user explicitly switched to view. */
+let _editMode = localStorage.getItem('usa-edit-mode') !== '0';
+function isEditMode() { return _editMode; }
+function toggleEditMode() { setEditMode(!_editMode); }
+function setEditMode(on) {
+  _editMode = !!on;
+  localStorage.setItem('usa-edit-mode', _editMode ? '1' : '0');
+  applyEditMode();
+}
+function updateEditModeBtn() {
+  const b = document.getElementById('editmode-btn');
+  if (!b) return;
+  // The toggle is only meaningful for accounts that are allowed to edit.
+  const capable = (typeof Store !== 'undefined' && Store.isConfigured())
+    ? Store.canEdit() : !location.hostname.endsWith('.github.io');
+  b.style.display = capable ? '' : 'none';
+  b.textContent = _editMode ? 'Editing' : 'View';
+  b.classList.toggle('editmode-on', _editMode);
+}
+function applyEditMode() {
+  updateEditModeBtn();
+  // Activities: re-render the open day so edit controls appear/disappear.
+  if (currentCityId && _currentDayDate) selectDay(_currentDayDate);
+  // City note (overlay) editability.
+  const cn = document.getElementById('city-note-el');
+  if (cn) cn.contentEditable = canEdit() ? 'true' : 'false';
+  // Notes tab editability.
+  document.querySelectorAll('#view-notes .note-card-body').forEach(el => {
+    el.contentEditable = canEdit() ? 'true' : 'false';
+  });
 }
 
 /* Persist the whole current city document — cloud when configured, else local server. */
@@ -61,7 +96,7 @@ function getAdjacentStops(currentId) {
   return { prev: stops[idx - 1] || null, next: stops[idx + 1] || null };
 }
 
-/* ── Day note — rich text (localStorage) ────────────── */
+/* ── Day theme — rich text, stored per-day inside the city doc ── */
 function dayNoteKey(date) { return `usa-daynote-${currentCityId}-${date}`; }
 
 /* Strip HTML down to safe inline tags only */
@@ -89,8 +124,12 @@ function _sanitizeNoteHtml(html) {
 
 function saveDayNote(date) {
   if (!date) return;
-  const html = document.getElementById('day-note-content')?.innerHTML || '';
-  localStorage.setItem(dayNoteKey(date), _sanitizeNoteHtml(html));
+  const html  = document.getElementById('day-note-content')?.innerHTML || '';
+  const clean = _sanitizeNoteHtml(html);
+  const day   = currentCity?.days?.find(d => d.date === date);
+  if (!day) return;
+  if (clean) day.theme = clean; else delete day.theme;
+  persistCity();
 }
 
 function toggleDayNote() {
@@ -246,14 +285,14 @@ function buildCityDOM(data) {
 
         <!-- Right content -->
         <div class="act-panel-content">
-          <!-- City-level note (persisted in localStorage, shared with Notes tab) -->
+          <!-- City-level note (stored on the city doc: cities/{id}.cityNote) -->
           <div class="city-note-wrap" id="city-note-wrap">
             <div class="city-note-hdr" onclick="toggleCityNoteWrap()">
               <span>📝 City Notes</span>
               <span class="day-note-arrow" id="city-note-arrow">▶</span>
             </div>
             <div class="city-note-body collapsed" id="city-note-body">
-              <div class="city-note-el" id="city-note-el" contenteditable="true"
+              <div class="city-note-el" id="city-note-el"
                 data-placeholder="Tips, reminders, things to buy…"></div>
             </div>
           </div>
@@ -280,8 +319,10 @@ function buildCityDOM(data) {
 
           <div class="act-panel-title" id="act-panel-title">
             <span id="act-panel-date">— select a day —</span>
-            <button class="act-add-btn" id="act-add-btn" onclick="openActEditor(-1)" title="Add activity" style="display:none">＋ Add</button>
-            <button class="act-compact-btn" id="act-compact-btn" onclick="toggleCompact()" title="Compact view">⊟</button>
+            <div class="act-title-actions">
+              <button class="act-add-btn" id="act-add-btn" onclick="openActEditor(-1)" title="Add activity" style="display:none">＋</button>
+              <button class="act-compact-btn" id="act-compact-btn" onclick="toggleCompact()" title="Compact view">⊟</button>
+            </div>
           </div>
           <div id="day-saved-links"></div>
           <div class="act-list" id="act-list"></div>
@@ -386,18 +427,24 @@ function buildCityDOM(data) {
         <div style="display:flex;gap:8px">
           <div style="flex:1">
             <label class="loc-label" style="margin-top:8px">Start</label>
-            <input class="loc-input" id="actedit-time" type="time"/>
+            <div class="time-field" style="position:relative">
+              <input class="loc-input time-input" id="actedit-time" type="text" placeholder="--:--" readonly autocomplete="off" style="cursor:pointer" onclick="_toggleTimeDropdown('actedit-time')"/>
+              <div class="time-dropdown" id="actedit-time-dd" style="display:none;position:absolute;top:calc(100% - 6px);left:0;right:0;max-height:min(180px,38vh);overflow-y:auto;background:var(--surface,#fff);border:1.5px solid var(--border,#d1d5db);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,0.22);z-index:50;padding:4px 0"></div>
+            </div>
           </div>
           <div style="flex:1">
             <label class="loc-label" style="margin-top:8px">End</label>
-            <input class="loc-input" id="actedit-timeend" type="time"/>
+            <div class="time-field" style="position:relative">
+              <input class="loc-input time-input" id="actedit-timeend" type="text" placeholder="--:--" readonly autocomplete="off" style="cursor:pointer" onclick="_toggleTimeDropdown('actedit-timeend')"/>
+              <div class="time-dropdown" id="actedit-timeend-dd" style="display:none;position:absolute;top:calc(100% - 6px);left:0;right:0;max-height:min(180px,38vh);overflow-y:auto;background:var(--surface,#fff);border:1.5px solid var(--border,#d1d5db);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,0.22);z-index:50;padding:4px 0"></div>
+            </div>
           </div>
         </div>
         <label class="loc-label" style="margin-top:8px">Notes <span style="font-weight:400;color:#9ca3af">(optional)</span></label>
         <textarea class="loc-input" id="actedit-notes" rows="2" placeholder="Notes…"></textarea>
         <div class="loc-actions">
-          <button class="loc-btn loc-btn-secondary loc-btn-danger" id="actedit-delete" onclick="deleteActEditor()">Delete</button>
-          <button class="loc-btn loc-btn-primary" onclick="saveActEditor()">Save</button>
+          <button class="loc-btn loc-btn-secondary loc-btn-danger" id="actedit-delete" style="flex:1" onclick="deleteActEditor()">Delete</button>
+          <button class="loc-btn loc-btn-primary" style="flex:2" onclick="saveActEditor()">Save</button>
         </div>
         <button class="loc-close" onclick="closeActEditor()">✕</button>
       </div>
@@ -407,15 +454,18 @@ function buildCityDOM(data) {
   /* ── Populate city note (after innerHTML set, to avoid XSS) ── */
   const _cnEl = document.getElementById('city-note-el');
   if (_cnEl) {
-    const _cnStored = localStorage.getItem(`usa-city-note-${currentCityId}`);
-    /* Use saved note if exists; otherwise fall back to the JSON default */
-    _cnEl.innerHTML = _cnStored || (data.cityNote
-      ? data.cityNote.replace(/\n/g, '<br>')
-      : '');
+    _cnEl.contentEditable = canEdit() ? 'true' : 'false';
+    const _cnCloud = (typeof data.cityNote === 'string') ? data.cityNote : '';
+    const _cnLocal = localStorage.getItem(`usa-city-note-${currentCityId}`);
+    /* Prefer the value stored on the city doc; fall back to any legacy local value */
+    const _seed = _cnCloud || _cnLocal || '';
+    _cnEl.innerHTML = _seed.includes('<') ? _seed : _seed.replace(/\n/g, '<br>');
     _cnEl.addEventListener('input', () => {
+      if (!canEdit()) return;
       const v = _cnEl.innerHTML.trim();
-      if (v && v !== '<br>') localStorage.setItem(`usa-city-note-${currentCityId}`, v);
-      else localStorage.removeItem(`usa-city-note-${currentCityId}`);
+      const clean = (v && v !== '<br>') ? v : '';
+      if (clean) currentCity.cityNote = clean; else delete currentCity.cityNote;
+      persistCity();
     });
     _cnEl.addEventListener('paste', e => {
       e.preventDefault();
@@ -492,10 +542,11 @@ async function selectDay(dateStr) {
   const activeTab = document.querySelector('.cdt-active');
   if (activeTab) activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
-  // Load saved note for this day (sanitize in case of pasted HTML)
+  // Load saved theme for this day (from the city doc; fall back to any legacy localStorage value)
   const noteContent = document.getElementById('day-note-content');
   if (noteContent) {
-    const raw = localStorage.getItem(dayNoteKey(dateStr)) || '';
+    const dayRec = currentCity.days.find(d => d.date === dateStr);
+    const raw = (dayRec && dayRec.theme) || localStorage.getItem(dayNoteKey(dateStr)) || '';
     noteContent.innerHTML = _sanitizeNoteHtml(raw);
   }
 
@@ -1175,6 +1226,45 @@ function _currentDayActivities() {
   return day.activities;
 }
 
+/* ── Time dropdown (Google-Calendar style list, 24h, 15-min steps) ── */
+let _timeOptsCache = null;
+function _timeOptions() {
+  if (_timeOptsCache) return _timeOptsCache;
+  const arr = [];
+  for (let h = 0; h < 24; h++)
+    for (let m = 0; m < 60; m += 15)
+      arr.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+  _timeOptsCache = arr;
+  return arr;
+}
+function _closeTimeDropdowns() {
+  document.querySelectorAll('.time-dropdown').forEach(d => { d.style.display = 'none'; });
+}
+function _toggleTimeDropdown(inputId) {
+  const dd = document.getElementById(inputId + '-dd');
+  if (!dd) return;
+  const wasOpen = dd.style.display === 'block';
+  _closeTimeDropdowns();
+  if (wasOpen) return;
+  const cur = (document.getElementById(inputId).value || '').trim();
+  dd.innerHTML = _timeOptions().map(t =>
+    `<div class="time-opt${t === cur ? ' time-opt-sel' : ''}" style="padding:6px 14px;font-size:13px;line-height:1.1;cursor:pointer${t === cur ? ';font-weight:700' : ''}" onclick="_pickTime('${inputId}','${t}')">${t}</div>`
+  ).join('');
+  dd.style.display = 'block';
+  const sel = dd.querySelector('.time-opt-sel');
+  if (sel) sel.scrollIntoView({ block: 'center' }); else dd.scrollTop = 0;
+}
+function _pickTime(inputId, val) {
+  document.getElementById(inputId).value = val;
+  _closeTimeDropdowns();
+}
+if (!window._timeDdBound) {
+  window._timeDdBound = true;
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.time-field')) _closeTimeDropdowns();
+  });
+}
+
 function openActEditor(idx) {
   if (!canEdit()) return;
   const arr = _currentDayActivities();
@@ -1193,6 +1283,7 @@ function openActEditor(idx) {
 }
 
 function closeActEditor() {
+  _closeTimeDropdowns();
   document.getElementById('actedit-modal').style.display = 'none';
   _editActArr = null; _editActIdx = -1;
 }
@@ -1214,9 +1305,14 @@ function saveActEditor() {
   if (_currentDayDate) selectDay(_currentDayDate);
 }
 
-function deleteActEditor() {
+async function deleteActEditor() {
   if (!_editActArr || _editActIdx < 0) return;
-  if (!confirm('Delete this activity?')) return;
+  const ok = await uiConfirm({
+    title: 'Delete activity?',
+    message: 'This activity will be permanently removed.',
+    confirmText: 'Delete',
+  });
+  if (!ok) return;
   const act = _editActArr[_editActIdx];
   if (act?.photo && typeof Store !== 'undefined' && Store.isConfigured()) Store.deletePhoto(act.photo);
   _editActArr.splice(_editActIdx, 1);
@@ -1377,9 +1473,13 @@ function _updateAuthUI(user) {
   const signout = document.getElementById('auth-signout-btn');
   const recheck = document.getElementById('auth-recheck-btn');
 
+  // Auth has now resolved → drop the loading splash so real state can show.
+  document.getElementById('auth-screen')?.classList.remove('auth-loading');
+
   // No cloud configured → don't gate (local dev fallback).
   if (!Store.isConfigured()) {
     if (btn) btn.style.display = 'none';
+    updateEditModeBtn();
     hideAuthScreen();
     return;
   }
@@ -1419,6 +1519,9 @@ function _updateAuthUI(user) {
     if (recheck) recheck.style.display = 'none';
     hideAuthScreen();
   }
+
+  // Show/hide the edit-mode toggle based on whether this account can edit.
+  updateEditModeBtn();
 
   // Re-render the open day so edit controls appear/disappear.
   if (currentCityId && _currentDayDate) selectDay(_currentDayDate);

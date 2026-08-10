@@ -25,7 +25,7 @@ function renderNotesTab() {
         <span class="note-card-icon">🌐</span>
         <span class="note-card-title">General Notes</span>
       </div>
-      <div class="note-card-body" id="gnote" contenteditable="true"
+      <div class="note-card-body" id="gnote"
         data-placeholder="Packing list · Apps to download · Reminders · Links…"></div>
     </div>`;
 
@@ -36,7 +36,7 @@ function renderNotesTab() {
         <span class="note-card-icon">${p.emoji}</span>
         <span class="note-card-title">${s.name}</span>
       </div>
-      <div class="note-card-body" id="cnote-${s.id}" contenteditable="true"
+      <div class="note-card-body" id="cnote-${s.id}"
         data-placeholder="Notes for ${s.name}…"></div>
     </div>`;
   });
@@ -44,25 +44,62 @@ function renderNotesTab() {
   html += `</div>`;
   view.innerHTML = html;
 
-  /* ── Wire up each note area ── */
-  function wireNote(el, storageKey, defaultContent = '') {
+  const cloud = (typeof Store !== 'undefined' && Store.isConfigured());
+
+  /* ── Wire up a note area ──
+     opts: { kind:'general' }  or  { kind:'city', cityId, defaultContent }
+     Cloud storage (Firestore) when configured:
+       · general note → cities/_general.note
+       · city note    → cities/{id}.cityNote
+     Falls back to localStorage when not signed-in/approved. */
+  async function wireNote(el, opts) {
     if (!el) return;
-    /* Load saved content, fall back to defaultContent from trip data */
-    const seed = defaultContent ? defaultContent.replace(/\n/g, '<br>') : '';
-    el.innerHTML = localStorage.getItem(storageKey) || seed;
-    /* Save on input */
+    const lsKey  = opts.kind === 'general' ? 'usa-global-note' : `usa-city-note-${opts.cityId}`;
+    const docId  = opts.kind === 'general' ? '_general' : opts.cityId;
+    const field  = opts.kind === 'general' ? 'note' : 'cityNote';
+    const seed   = opts.defaultContent ? opts.defaultContent.replace(/\n/g, '<br>') : '';
+
+    /* ── Load ── */
+    let cloudVal = null;
+    if (cloud) {
+      try {
+        const doc = await Store.loadCity(docId);
+        if (doc && typeof doc[field] === 'string') cloudVal = doc[field];
+      } catch { /* denied / offline → fall back below */ }
+    }
+    const raw = (cloudVal != null && cloudVal !== '')
+      ? cloudVal
+      : (localStorage.getItem(lsKey) || seed);
+    el.innerHTML = raw.includes('<') ? raw : raw.replace(/\n/g, '<br>');
+
+    /* View mode → read-only */
+    const _editable = (typeof canEdit === 'function') ? canEdit() : true;
+    el.contentEditable = _editable ? 'true' : 'false';
+
+    /* ── Save on input ── */
     el.addEventListener('input', () => {
+      if (typeof canEdit === 'function' && !canEdit()) return;
       const v = el.innerHTML.trim();
-      if (v && v !== '<br>') localStorage.setItem(storageKey, v);
-      else localStorage.removeItem(storageKey);
+      const clean = (v && v !== '<br>') ? v : '';
+      if (cloud && Store.canEdit()) {
+        Store.saveCityFields(docId, { [field]: clean });
+      } else if (clean) {
+        localStorage.setItem(lsKey, clean);
+      } else {
+        localStorage.removeItem(lsKey);
+      }
     });
-    /* Plain-text paste only */
+
+    /* ── Plain-text paste only ── */
     el.addEventListener('paste', e => {
       e.preventDefault();
       document.execCommand('insertText', false, e.clipboardData.getData('text/plain'));
     });
   }
 
-  wireNote(document.getElementById('gnote'), 'usa-global-note');
-  stops.forEach(s => wireNote(document.getElementById(`cnote-${s.id}`), `usa-city-note-${s.id}`, s.defaultNote));
+  wireNote(document.getElementById('gnote'), { kind: 'general' });
+  stops.forEach(s => wireNote(
+    document.getElementById(`cnote-${s.id}`),
+    { kind: 'city', cityId: s.id, defaultContent: s.defaultNote }
+  ));
 }

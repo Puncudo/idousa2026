@@ -24,7 +24,7 @@ html { scroll-behavior: smooth; }
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
   min-height: 100dvh;
   overflow-x: hidden;
 }
@@ -512,7 +512,7 @@ body {
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  background: rgba(255,248,248,0.92);
+  background: rgba(240,244,251,0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
@@ -764,11 +764,11 @@ body {
 }
 .day-note-edit-btn:hover { background: rgba(47,111,237,0.18); }
 .day-note-edit-btn-active {
-  background: var(--pink);
+  background: #2f6fed;
   color: white;
-  border-color: var(--pink);
+  border-color: #2f6fed;
 }
-.day-note-edit-btn-active:hover { background: #a3002f; }
+.day-note-edit-btn-active:hover { background: #1d4ed8; }
 
 .day-note-label {
   font-size: 10px;
@@ -922,6 +922,13 @@ body {
   flex-shrink: 0;
 }
 
+.act-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .act-trip-dates {
   font-size: 10px;
   color: var(--muted);
@@ -939,7 +946,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 7px;
   width: 26px;
-  height: 22px;
+  height: 24px;
   font-size: 13px;
   line-height: 1;
   cursor: pointer;
@@ -1253,6 +1260,37 @@ body {
   padding: 0 0 20px;
 }
 
+/* Center modals on larger screens; keep bottom-sheet feel on phones */
+@media (min-width: 640px) {
+  .loc-modal {
+    align-items: center;
+    padding: 20px;
+  }
+  .loc-modal-box {
+    border-radius: 16px;
+  }
+}
+
+/* Confirm dialog is always centered and compact */
+.confirm-modal {
+  align-items: center;
+  padding: 20px;
+}
+.confirm-box {
+  max-width: 360px;
+  border-radius: 16px;
+}
+.confirm-message {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.45;
+  margin-bottom: 16px;
+}
+.loc-btn-danger-solid {
+  background: #ef4444;
+  color: #fff;
+}
+
 .loc-modal-box {
   background: var(--surface);
   border-radius: 20px 20px 16px 16px;
@@ -1362,6 +1400,48 @@ body {
 
 .loc-input:focus {
   border-color: var(--pink);
+}
+
+/* ── Time dropdown (Google-Calendar-style list) ── */
+.time-field {
+  position: relative;
+}
+.time-input {
+  cursor: pointer;
+}
+.time-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% - 6px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.22);
+  z-index: 50;
+  padding: 4px 0;
+  -webkit-overflow-scrolling: touch;
+}
+.time-dropdown.open {
+  display: block;
+}
+.time-opt {
+  padding: 9px 14px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  line-height: 1.1;
+}
+.time-opt:hover {
+  background: var(--surface2);
+}
+.time-opt-sel {
+  background: var(--pink-glow);
+  color: var(--pink);
+  font-weight: 700;
 }
 
 .loc-coords {
@@ -2091,26 +2171,54 @@ body {
 /* ── Auth + activity-editor controls ── */
 .auth-btn {
   margin-inline-start: auto;
-  background: rgba(255,255,255,0.15);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.4);
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 4px 12px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
-.auth-btn:hover { background: rgba(255,255,255,0.28); }
+.auth-btn:hover { background: var(--surface); border-color: var(--pink); color: var(--pink); }
+
+/* ── Edit / View mode toggle ── */
+.header-top .editmode-btn {
+  margin-inline-start: auto;
+  background: var(--surface2);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.header-top .editmode-btn.editmode-on {
+  background: var(--pink);
+  color: #fff;
+  border-color: var(--pink);
+}
+/* When the toggle is present, it owns the right-alignment; auth sits beside it */
+.header-top .editmode-btn + .auth-btn { margin-inline-start: 8px; }
 
 .act-add-btn {
   background: #1d4ed8;
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 4px 12px;
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: 7px;
+  width: 26px;
+  height: 24px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 .act-add-btn:hover { filter: brightness(1.1); }
 
@@ -2160,6 +2268,25 @@ select.loc-input { appearance: auto; }
 .auth-flag { font-size: 46px; }
 .auth-title { margin: 6px 0 4px; font-size: 26px; color: #0a3161; }
 .auth-sub { margin: 0 0 22px; color: #6b7280; font-size: 14px; }
+
+/* Loading splash — shown until Firebase auth resolves (avoids login flash) */
+.auth-spinner {
+  display: none;
+  width: 30px;
+  height: 30px;
+  margin: 20px auto 8px;
+  border: 3px solid rgba(10,49,97,0.15);
+  border-top-color: #0a3161;
+  border-radius: 50%;
+  animation: auth-spin .8s linear infinite;
+}
+@keyframes auth-spin { to { transform: rotate(360deg); } }
+.auth-loading .auth-spinner { display: block; }
+.auth-loading .auth-sub,
+.auth-loading .auth-google-btn,
+.auth-loading .auth-status,
+.auth-loading .auth-recheck-btn,
+.auth-loading .auth-signout-btn { display: none !important; }
 .auth-google-btn {
   display: inline-flex; align-items: center; gap: 10px;
   width: 100%; justify-content: center;
@@ -2187,4 +2314,122 @@ select.loc-input { appearance: auto; }
 .auth-signout-btn {
   margin-top: 14px; background: none; border: none;
   color: #6b7280; font-size: 13px; cursor: pointer; text-decoration: underline;
+}
+
+/* ═══════════════════════════════════════════════════════
+   UNIFIED BUTTON SYSTEM
+   One coherent language for every control: consistent radius,
+   flat surfaces, and a simple color hover (no shadow, no motion).
+════════════════════════════════════════════════════════ */
+:root {
+  --btn-radius: 9px;
+  --btn-hover-bg: #cdd9f4;
+}
+
+/* ── Pill controls ── */
+.auth-btn,
+.header-top .editmode-btn,
+.dest-nav-btn,
+.day-note-edit-btn {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  padding: 3px 12px;
+  border-radius: var(--btn-radius);
+  border: none;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: none;
+  cursor: pointer;
+  transition: background .14s ease, color .14s ease;
+}
+.auth-btn:hover,
+.header-top .editmode-btn:hover,
+.dest-nav-btn:hover,
+.day-note-edit-btn:hover {
+  color: var(--pink);
+  background: var(--btn-hover-bg);
+}
+
+/* ── Primary / active pills ── */
+.header-top .editmode-btn.editmode-on,
+.day-note-edit-btn-active {
+  background: var(--pink);
+  border: none;
+  color: #fff;
+  box-shadow: none;
+}
+.header-top .editmode-btn.editmode-on:hover,
+.day-note-edit-btn-active:hover {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+/* ── Icon buttons (neutral) ── */
+.act-icon-btn,
+.act-compact-btn,
+.rte-btn {
+  border: none;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: none;
+  transition: background .14s ease, color .14s ease;
+}
+.act-icon-btn:hover,
+.act-compact-btn:hover,
+.rte-btn:hover {
+  color: var(--pink);
+  background: var(--btn-hover-bg);
+}
+
+/* ── Accent add button ── */
+.act-add-btn {
+  background: var(--pink);
+  border: none;
+  color: #fff;
+  box-shadow: none;
+  transition: background .14s ease, filter .14s ease;
+}
+.act-add-btn:hover { filter: brightness(1.06); }
+
+/* Right-aligned action cluster in the day title bar */
+.act-title-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* ── Unified focus ring (keyboard users) ── */
+.auth-btn:focus-visible,
+.header-top .editmode-btn:focus-visible,
+.dest-nav-btn:focus-visible,
+.day-note-edit-btn:focus-visible,
+.act-icon-btn:focus-visible,
+.act-compact-btn:focus-visible,
+.act-add-btn:focus-visible,
+.rte-btn:focus-visible,
+.loc-btn:focus-visible {
+  outline: 2px solid var(--pink);
+  outline-offset: 2px;
+}
+
+/* ── City nav pills: smaller font, keep the ‹ › arrow visible ── */
+.dest-nav-btn {
+  font-size: 9.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 120px;
+  overflow: visible;
+  text-overflow: clip;
+}
+.city-nav-label {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 78px;
 }

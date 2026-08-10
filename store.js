@@ -128,6 +128,21 @@ const Store = (() => {
     }, 600);
   }
 
+  /* Debounced partial (merge) save — updates only the given fields of cities/{id}. */
+  function saveCityFields(id, fields) {
+    if (!_ready || !canEdit()) { twarn(`saveCityFields(${id}): skipped (canEdit=${canEdit()})`); return; }
+    const key = id + '__fields';
+    tlog(`saveCityFields(${id}): queued (debounced) …`, fields);
+    clearTimeout(_saveTimers[key]);
+    _saveTimers[key] = setTimeout(() => {
+      tlog(`saveCityFields(${id}): merging into Firestore …`);
+      _db.collection('cities').doc(id)
+        .set(fields, { merge: true })
+        .then(() => tlog(`saveCityFields(${id}): saved ✓`))
+        .catch(e => { terr(`saveCityFields(${id}): FAILED`, e); alert('Couldn\u2019t save your changes. Please try again.'); });
+    }, 600);
+  }
+
   /* ── Photos (Firebase Storage) ── */
   async function uploadPhoto(cityId, file) {
     if (!_ready) throw new Error('Cloud storage not configured');
@@ -151,7 +166,7 @@ const Store = (() => {
   return {
     init, isConfigured: () => _configured,
     signIn, signOut, onAuthChange, currentUser, isSignedIn, canEdit, isApproved, approvalError, recheckApproval,
-    loadCity, saveCity, uploadPhoto, deletePhoto,
+    loadCity, saveCity, saveCityFields, uploadPhoto, deletePhoto,
   };
 })();
 

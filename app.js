@@ -165,6 +165,45 @@ function registerSW() {
   }
 }
 
+/* ── In-app confirm dialog (replaces window.confirm) ── */
+function uiConfirm(opts = {}) {
+  const {
+    title = 'Are you sure?',
+    message = '',
+    confirmText = 'OK',
+    cancelText = 'Cancel',
+    danger = true,
+  } = opts;
+  return new Promise(resolve => {
+    const modal  = document.getElementById('confirm-modal');
+    if (!modal) { resolve(window.confirm(message || title)); return; }
+    const okBtn  = document.getElementById('confirm-ok');
+    const cancel = document.getElementById('confirm-cancel');
+    document.getElementById('confirm-title').textContent = title;
+    const msgEl = document.getElementById('confirm-message');
+    msgEl.textContent = message;
+    msgEl.style.display = message ? '' : 'none';
+    okBtn.textContent = confirmText;
+    cancel.textContent = cancelText;
+    okBtn.className = 'loc-btn ' + (danger ? 'loc-btn-danger-solid' : 'loc-btn-primary');
+    modal.style.display = 'flex';
+
+    function cleanup(result) {
+      modal.style.display = 'none';
+      okBtn.removeEventListener('click', onOk);
+      cancel.removeEventListener('click', onCancel);
+      modal.removeEventListener('click', onBackdrop);
+      resolve(result);
+    }
+    const onOk       = () => cleanup(true);
+    const onCancel   = () => cleanup(false);
+    const onBackdrop = e => { if (e.target === modal) cleanup(false); };
+    okBtn.addEventListener('click', onOk);
+    cancel.addEventListener('click', onCancel);
+    modal.addEventListener('click', onBackdrop);
+  });
+}
+
 /* ── Init ───────────────────────────────────────────── */
 async function init() {
   initTabs();

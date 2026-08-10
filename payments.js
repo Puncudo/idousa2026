@@ -291,9 +291,14 @@ function savePayModal() {
   if (v) _drawPayments(v);
 }
 
-function deletePayModal() {
+async function deletePayModal() {
   if (!_payEditId) return;
-  if (!confirm('Delete this payment?')) return;
+  const ok = await uiConfirm({
+    title: 'Delete payment?',
+    message: 'This payment will be permanently removed.',
+    confirmText: 'Delete',
+  });
+  if (!ok) return;
   _pays = _pays.filter(p => p.id !== _payEditId);
   _savePays();
   closePayModal();

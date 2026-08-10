@@ -9,7 +9,10 @@
   <meta name="apple-mobile-web-app-title" content="USA 2026"/>
   <title>USA 2026</title>
   <link rel="manifest" href="manifest.json"/>
-  <link rel="stylesheet" href="style.css?v=54"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"/>
+  <link rel="stylesheet" href="style.css?v=69"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 </head>
 <body>
@@ -22,6 +25,7 @@
       <span class="header-flag">🇺🇸</span>
       <h1 class="header-title">USA 2026</h1>
       <span class="header-sub">Dates TBD</span>
+      <button id="editmode-btn" class="editmode-btn" onclick="toggleEditMode()" style="display:none">View</button>
       <button id="auth-btn" class="auth-btn" onclick="handleAuthClick()" style="display:none">Sign in</button>
     </div>
     <nav class="tab-nav">
@@ -60,11 +64,24 @@
 <!-- City detail overlay (populated by city.js) -->
 <div id="city-overlay"></div>
 
+<!-- Generic confirm dialog -->
+<div class="loc-modal confirm-modal" id="confirm-modal" style="display:none">
+  <div class="loc-modal-box confirm-box">
+    <div class="loc-modal-title" id="confirm-title">Are you sure?</div>
+    <div class="confirm-message" id="confirm-message"></div>
+    <div class="loc-actions">
+      <button class="loc-btn loc-btn-secondary" id="confirm-cancel" style="flex:1">Cancel</button>
+      <button class="loc-btn loc-btn-primary" id="confirm-ok" style="flex:1">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- Sign-in screen -->
-<div id="auth-screen" class="auth-screen" style="display:none">
+<div id="auth-screen" class="auth-screen auth-loading" style="display:none">
   <div class="auth-card">
     <div class="auth-flag">🇺🇸</div>
     <h2 class="auth-title">USA 2026</h2>
+    <div class="auth-spinner" id="auth-spinner"></div>
     <p class="auth-sub" id="auth-sub">Sign in to continue</p>
     <button class="auth-google-btn" id="auth-google-btn" onclick="signInWithGoogle()">
       <span class="auth-g">G</span> Sign in with Google
@@ -84,10 +101,10 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="firebase-config.js?v=1"></script>
-<script src="store.js?v=8"></script>
+<script src="store.js?v=9"></script>
 
-<script src="app.js?v=32"></script>
-<script src="city.js?v=53"></script>
-<script src="notes.js?v=1"></script>
+<script src="app.js?v=33"></script>
+<script src="city.js?v=67"></script>
+<script src="notes.js?v=3"></script>
 </body>
 </html>
