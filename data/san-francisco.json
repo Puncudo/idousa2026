@@ -17,6 +17,8 @@
       { "name": "Palantir Technologies (Palo Alto)", "type": "sightseeing", "time": "09:00" },
       { "name": "The Token Company", "type": "sightseeing", "time": "" },
       { "name": "Drive / flight to Los Angeles", "type": "transport", "time": "17:00" }
-    ] }
+    ] },
+    { "date": "2026-10-23", "activities": [] },
+    { "date": "2026-10-24", "activities": [] }
   ]
 }

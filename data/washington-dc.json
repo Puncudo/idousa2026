@@ -10,14 +10,14 @@
     "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Washington+DC+USA"
   },
   "days": [
-    { "date": "2026-10-19", "activities": [
+    { "date": "2026-10-18", "activities": [
       { "name": "Train from New York", "type": "transport", "time": "" },
       { "name": "Dinner", "type": "food", "time": "" }
     ] },
-    { "date": "2026-10-20", "activities": [
+    { "date": "2026-10-19", "activities": [
       { "name": "Oracle", "type": "sightseeing", "time": "09:30" }
     ] },
-    { "date": "2026-10-21", "activities": [
+    { "date": "2026-10-20", "activities": [
       { "name": "The Pentagon", "type": "sightseeing", "time": "09:00" },
       { "name": "Flight to San Francisco", "type": "transport", "time": "18:00" }
     ] }

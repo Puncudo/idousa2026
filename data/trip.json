@@ -22,8 +22,8 @@
       "id": "washington-dc",
       "name": "Washington DC",
       "image": "washington",
-      "arrival": "2026-10-19",
-      "departure": "2026-10-21",
+      "arrival": "2026-10-18",
+      "departure": "2026-10-20",
       "transit": "🚆 Amtrak train from NYC Penn Station · ~3h"
     },
     {
@@ -32,7 +32,7 @@
       "name": "San Francisco",
       "image": "sanfrancisco",
       "arrival": "2026-10-21",
-      "departure": "2026-10-22",
+      "departure": "2026-10-24",
       "transit": "🏛️ Pentagon visit · ✈️ Flight DCA/IAD → SFO"
     },
     {
@@ -50,7 +50,7 @@
       "name": "Tampa",
       "image": "tampa",
       "arrival": "2026-10-25",
-      "departure": "2026-10-27",
+      "departure": "2026-10-26",
       "transit": "✈️ Flight LAX → TPA"
     },
     {
