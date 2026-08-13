@@ -6,16 +6,7 @@
       "label": "Departure",
       "date": "2026-10-17",
       "time": "23:30",
-      "note": "Flight from Tel Aviv to New York"
-    },
-    {
-      "type": "major",
-      "id": "new-york",
-      "name": "New York",
-      "image": "newyork",
-      "arrival": "2026-10-18",
-      "departure": "2026-10-19",
-      "transit": "✈️ Arrive JFK / Newark 06:30 — AirTrain + subway or taxi to Manhattan"
+      "note": "Flight from Tel Aviv to Washington DC"
     },
     {
       "type": "major",
@@ -24,7 +15,7 @@
       "image": "washington",
       "arrival": "2026-10-18",
       "departure": "2026-10-20",
-      "transit": "🚆 Amtrak train from NYC Penn Station · ~3h"
+      "transit": "✈️ Arrive from Tel Aviv 06:30"
     },
     {
       "type": "major",
@@ -37,21 +28,12 @@
     },
     {
       "type": "major",
-      "id": "los-angeles",
-      "name": "Los Angeles",
-      "image": "losangeles",
-      "arrival": "2026-10-22",
-      "departure": "2026-10-25",
-      "transit": "🚗 Drive / ✈️ flight SFO → LAX"
-    },
-    {
-      "type": "major",
       "id": "tampa",
       "name": "Tampa",
       "image": "tampa",
       "arrival": "2026-10-25",
       "departure": "2026-10-26",
-      "transit": "✈️ Flight LAX → TPA"
+      "transit": "✈️ Flight SFO → TPA"
     },
     {
       "type": "flight",
