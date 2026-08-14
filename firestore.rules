@@ -26,6 +26,11 @@ service cloud.firestore {
       allow read, write: if isEditor();
     }
 
+    // Trip timeline document (trip/main) — same approved-editor gate.
+    match /trip/{docId} {
+      allow read, write: if isEditor();
+    }
+
     // Users may read only their own approval doc; approvals are managed in the console.
     match /editors/{email} {
       allow read: if request.auth != null && request.auth.token.email.lower() == email;

@@ -33,7 +33,7 @@ function renderNotesTab() {
     const p = (typeof PLACES !== 'undefined' ? PLACES[s.image] : null) || { emoji: '📍' };
     html += `<div class="note-card">
       <div class="note-card-hdr">
-        <span class="note-card-icon">${p.emoji}</span>
+        <span class="note-card-icon">${s.emoji || p.emoji}</span>
         <span class="note-card-title">${s.name}</span>
       </div>
       <div class="note-card-body" id="cnote-${s.id}"

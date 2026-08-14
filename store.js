@@ -32,6 +32,10 @@ const Store = (() => {
       _auth    = firebase.auth();
       _db      = firebase.firestore();
       _storage = firebase.storage();
+      // Cached reads keep the app usable offline now that there is no bundled JSON.
+      _db.enablePersistence({ synchronizeTabs: true })
+        .then(() => tlog('init: offline persistence enabled'))
+        .catch(e => twarn('init: offline persistence unavailable', e?.code || e?.message));
       tlog('init: Firebase app + auth + firestore + storage ready');
     } catch (e) {
       terr('init: Firebase initialisation failed', e);
@@ -58,7 +62,7 @@ const Store = (() => {
     const key = (u.email || '').toLowerCase();
     tlog(`approval[${label}]: reading editors/${key} …`);
     try {
-      const snap = await _db.collection('editors').doc(key).get();
+      const snap = await _getDoc(_db.collection('editors').doc(key));
       const data = snap.exists ? snap.data() : null;
       const val = data ? data.approved : undefined;
       _approved = val === true || val === 'true';
@@ -100,16 +104,30 @@ const Store = (() => {
     _authListeners.forEach(fn => { try { fn(_user); } catch (e) { terr(e); } });
   }
 
+  /* Read a doc, falling back to the offline cache when the server is slow/unreachable.
+     A plain get() waits on the network indefinitely when offline. */
+  async function _getDoc(ref) {
+    try {
+      return await Promise.race([
+        ref.get(),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('server-timeout')), 3000)),
+      ]);
+    } catch (e) {
+      tlog('read: server unavailable → trying offline cache');
+      return ref.get({ source: 'cache' });
+    }
+  }
+
   /* ── City data (Firestore doc: cities/{id}) ── */
   async function loadCity(id) {
     if (!_ready) { tlog(`loadCity(${id}): cloud off → using bundled JSON`); return null; }
     tlog(`loadCity(${id}): reading cities/${id} …`);
     try {
-      const snap = await _db.collection('cities').doc(id).get();
-      tlog(`loadCity(${id}): ${snap.exists ? 'found cloud doc' : 'no cloud doc → will seed from JSON'}`);
+      const snap = await _getDoc(_db.collection('cities').doc(id));
+      tlog(`loadCity(${id}): ${snap.exists ? 'found cloud doc' : 'no cloud doc'}`);
       return snap.exists ? snap.data() : null;
     } catch (e) {
-      twarn(`loadCity(${id}): read failed → falling back to JSON`, e?.code || e?.message);
+      twarn(`loadCity(${id}): read failed`, e?.code || e?.message);
       return null;
     }
   }
@@ -143,6 +161,34 @@ const Store = (() => {
     }, 600);
   }
 
+  /* ── Trip timeline (Firestore doc: trip/main) ── */
+  async function loadTrip() {
+    if (!_ready) { tlog('loadTrip: cloud off'); return null; }
+    tlog('loadTrip: reading trip/main …');
+    try {
+      const snap = await _getDoc(_db.collection('trip').doc('main'));
+      tlog(`loadTrip: ${snap.exists ? 'found cloud doc' : 'no cloud doc'}`);
+      return snap.exists ? snap.data() : null;
+    } catch (e) {
+      twarn('loadTrip: read failed', e?.code || e?.message);
+      return null;
+    }
+  }
+
+  /* Debounced whole-document save of the trip timeline. */
+  function saveTrip(data) {
+    if (!_ready || !canEdit()) { twarn(`saveTrip: skipped (canEdit=${canEdit()})`); return; }
+    tlog('saveTrip: queued (debounced) …');
+    clearTimeout(_saveTimers['__trip']);
+    _saveTimers['__trip'] = setTimeout(() => {
+      tlog('saveTrip: writing to Firestore …');
+      _db.collection('trip').doc('main')
+        .set(data, { merge: false })
+        .then(() => tlog('saveTrip: saved ✓'))
+        .catch(e => { terr('saveTrip: FAILED', e); alert('Couldn\u2019t save your changes. Please try again.'); });
+    }, 600);
+  }
+
   /* ── Photos (Firebase Storage) ── */
   async function uploadPhoto(cityId, file) {
     if (!_ready) throw new Error('Cloud storage not configured');
@@ -166,7 +212,7 @@ const Store = (() => {
   return {
     init, isConfigured: () => _configured,
     signIn, signOut, onAuthChange, currentUser, isSignedIn, canEdit, isApproved, approvalError, recheckApproval,
-    loadCity, saveCity, saveCityFields, uploadPhoto, deletePhoto,
+    loadCity, saveCity, saveCityFields, loadTrip, saveTrip, uploadPhoto, deletePhoto,
   };
 })();
 

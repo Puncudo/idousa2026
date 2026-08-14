@@ -33,6 +33,8 @@ function updateEditModeBtn() {
 }
 function applyEditMode() {
   updateEditModeBtn();
+  // Timeline: re-render so add/edit affordances appear/disappear.
+  if (window._tripData && typeof buildTimeline === 'function') buildTimeline(window._tripData);
   // Activities: re-render the open day so edit controls appear/disappear.
   if (currentCityId && _currentDayDate) selectDay(_currentDayDate);
   // City note (overlay) editability.
@@ -44,20 +46,11 @@ function applyEditMode() {
   });
 }
 
-/* Persist the whole current city document — cloud when configured, else local server. */
+/* Persist the whole current city document to Firestore. */
 function persistCity() {
   if (!currentCityId || !currentCity) return;
-  if (typeof Store !== 'undefined' && Store.isConfigured()) {
-    tlog(`persistCity: ${currentCityId} → cloud`);
-    Store.saveCity(currentCityId, currentCity);
-  } else {
-    tlog(`persistCity: ${currentCityId} → local server`);
-    fetch('/api/save-json', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ city: currentCityId, content: currentCity }),
-    }).catch(() => {});
-  }
+  tlog(`persistCity: ${currentCityId} → cloud`);
+  Store.saveCity(currentCityId, currentCity);
 }
 
 let cityMap      = null;
@@ -175,25 +168,15 @@ function execRteCmd(cmd) {
 async function openCity(stopItem) {
   currentStopItem = stopItem;
   const filename = stopItem.id;
-  let data;
-  // Cloud doc is the source of truth once it exists; bundled JSON is the seed/fallback.
-  data = await Store.loadCity(filename);
-  if (!data) try {
-    tlog(`openCity(${filename}): fetching bundled JSON`);
-    const res = await fetch(`./data/${filename}.json?_=${Date.now()}`);
-    if (!res.ok) throw new Error();
-    data = await res.json();
-  } catch {
-    // No plan yet — open a stub so user can still navigate
-    data = {
-      id: filename,
-      name: stopItem.name,
-      center: [35.6762, 139.6503],
-      zoom: 6,
-      hotel: { name: 'No plan yet' },
-      days: []
-    };
-  }
+  // No cloud doc yet (freshly added stop) — open a stub so the user can still navigate.
+  const data = await Store.loadCity(filename) || {
+    id: filename,
+    name: stopItem.name,
+    center: [39.8283, -98.5795],
+    zoom: 5,
+    hotel: { name: 'No plan yet' },
+    days: []
+  };
 
   currentCity   = data;
   currentCityId = filename;
@@ -204,6 +187,8 @@ async function openCity(stopItem) {
   buildCityDOM(data);
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
+  // Only the first open adds a history entry; city-to-city navigation reuses it.
+  if (!wasOpen) pushOverlay('city', _closeCityNow);
 
   /* Block taps on activity links for 600ms after opening — prevents ghost-clicks
      from the timeline tap landing on a 🗺️ link inside the freshly-rendered overlay */
@@ -234,6 +219,10 @@ async function openCity(stopItem) {
 
 /* ── Close city ─────────────────────────────────────── */
 function closeCity() {
+  if (!closeOverlay('city')) _closeCityNow();
+}
+
+function _closeCityNow() {
   document.getElementById('city-overlay').classList.remove('open');
   document.body.style.overflow = '';
   if (cityMap) { cityMap.remove(); cityMap = null; }
@@ -264,7 +253,7 @@ function buildCityDOM(data) {
     <div class="city-header">
       <button class="city-back" onclick="closeCity()">‹</button>
       <div class="city-title-block">
-        <span class="city-hname">${(PLACES[currentStopItem?.image]?.emoji || '') + ' ' + data.name}</span>
+        <span class="city-hname">${(currentStopItem?.emoji || PLACES[currentStopItem?.image]?.emoji || '') + ' ' + data.name}</span>
         ${arrStr && depStr ? `<span class="city-hdates">${arrStr} – ${depStr}</span>` : ''}
       </div>
       <div class="city-header-nav">
@@ -1167,17 +1156,7 @@ async function locSave() {
 ══════════════════════════════════════════════════════ */
 async function uploadPhoto(act, file) {
   try {
-    if (Store.isConfigured()) {
-      act.photo = await Store.uploadPhoto(currentCityId, file);
-    } else {
-      const fd = new FormData();
-      fd.append('city', currentCityId);
-      fd.append('name', act.name);
-      fd.append('photo', file);
-      const res = await fetch('/api/upload-photo', { method: 'POST', body: fd });
-      if (!res.ok) throw new Error();
-      act.photo = (await res.json()).photo;
-    }
+    act.photo = await Store.uploadPhoto(currentCityId, file);
   } catch (e) {
     console.error('[photo] upload failed', e);
     alert('Couldn\u2019t upload the photo. Please try again.');
@@ -1190,18 +1169,8 @@ async function uploadPhoto(act, file) {
 
 async function removePhoto(act) {
   try {
-    if (Store.isConfigured()) {
-      await Store.deletePhoto(act.photo);
-      delete act.photo;
-    } else {
-      const res = await fetch('/api/delete-photo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ city: currentCityId, name: act.name }),
-      });
-      if (!res.ok) throw new Error();
-      delete act.photo;
-    }
+    await Store.deletePhoto(act.photo);
+    delete act.photo;
   } catch {
     alert('Couldn\u2019t remove the photo. Please try again.');
     return;
@@ -1280,9 +1249,14 @@ function openActEditor(idx) {
   document.getElementById('actedit-notes').value = act.notes || '';
   document.getElementById('actedit-delete').style.display = idx >= 0 ? '' : 'none';
   document.getElementById('actedit-modal').style.display = 'flex';
+  pushOverlay('act-edit', _closeActEditorNow);
 }
 
 function closeActEditor() {
+  if (!closeOverlay('act-edit')) _closeActEditorNow();
+}
+
+function _closeActEditorNow() {
   _closeTimeDropdowns();
   document.getElementById('actedit-modal').style.display = 'none';
   _editActArr = null; _editActIdx = -1;
@@ -1523,6 +1497,9 @@ function _updateAuthUI(user) {
   // Show/hide the edit-mode toggle based on whether this account can edit.
   updateEditModeBtn();
 
+  // Timeline may gain/lose edit affordances once approval resolves.
+  if (window._tripData && typeof buildTimeline === 'function') buildTimeline(window._tripData);
+
   // Re-render the open day so edit controls appear/disappear.
   if (currentCityId && _currentDayDate) selectDay(_currentDayDate);
 }
@@ -1552,6 +1529,7 @@ function openHotelPanel() {
   updateHotelCoordsDisplay();
 
   document.getElementById('hotel-modal').style.display = 'flex';
+  pushOverlay('hotel', _closeHotelPanelNow);
 
   if (_hotelCoords && cityMap) {
     panToVisible(_hotelCoords, 15);
@@ -1560,7 +1538,12 @@ function openHotelPanel() {
 }
 
 function closeHotelPanel() {
+  if (!closeOverlay('hotel')) _closeHotelPanelNow();
+}
+
+function _closeHotelPanelNow() {
   document.getElementById('hotel-modal').style.display = 'none';
+  if (pickMode?.isHotel) { pickMode = null; exitPickMode(); }
   clearPreviewPin();
   _hotelCoords = null;
   _hotelMapsUrl = null;
@@ -1701,6 +1684,7 @@ function openPhotoModal(act) {
   document.getElementById('photo-preview-img').style.display = 'none';
   document.getElementById('photo-save-btn').disabled = true;
   modal.style.display = 'flex';
+  pushOverlay('photo-modal', () => { modal.style.display = 'none'; _photoAct = null; _photoPendingBlob = null; });
 
   // Wire file input
   const fileInput = document.getElementById('photo-file-input-modal');
@@ -1722,6 +1706,7 @@ function openPhotoModal(act) {
 }
 
 function closePhotoModal() {
+  if (closeOverlay('photo-modal')) return;
   const modal = document.getElementById('photo-modal');
   if (modal) modal.style.display = 'none';
   _photoAct         = null;
@@ -1820,10 +1805,11 @@ function openActDetailCard(key) {
   }
   overlay.innerHTML = html;
   overlay.classList.add('open');
+  pushOverlay('act-card', () => overlay.classList.remove('open'));
 }
 
 function closeActDetailCard() {
-  document.getElementById('act-detail-overlay')?.classList.remove('open');
+  if (!closeOverlay('act-card')) document.getElementById('act-detail-overlay')?.classList.remove('open');
 }
 
 /* ══════════════════════════════════════════════════════
@@ -1840,9 +1826,7 @@ function openPhotoLightbox(src, caption) {
       <div id="photo-lb-caption"></div>
     `;
     lb.addEventListener('click', e => {
-      if (e.target === lb || e.target.classList.contains('photo-lb-close')) {
-        lb.classList.remove('open');
-      }
+      if (e.target === lb || e.target.classList.contains('photo-lb-close')) closePhotoLightbox();
     });
     document.body.appendChild(lb);
   }
@@ -1851,6 +1835,11 @@ function openPhotoLightbox(src, caption) {
   cap.textContent = caption || '';
   cap.style.display = caption ? '' : 'none';
   lb.classList.add('open');
+  pushOverlay('lightbox', () => lb.classList.remove('open'));
+}
+
+function closePhotoLightbox() {
+  if (!closeOverlay('lightbox')) document.getElementById('photo-lightbox')?.classList.remove('open');
 }
 
 /* ══════════════════════════════════════════════════════
