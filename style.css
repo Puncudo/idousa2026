@@ -29,6 +29,22 @@ body {
   overflow-x: hidden;
 }
 
+/* Long-pressing UI chrome on mobile shouldn't select text or pop the native
+   "Search Google for…" menu. Real text surfaces opt back in below. */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input, textarea, select,
+[contenteditable="true"],
+.note-card-body, .city-note-el,
+.act-notes, .adc-notes, .adc-name, .tl-flight-note {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 /* ── Header ──────────────────────────────────────── */
 .app-header {
   position: fixed;
