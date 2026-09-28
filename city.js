@@ -479,10 +479,9 @@ function initMap(data) {
 
   cityMap = L.map('city-map', { zoomControl: false });
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '© <a href="https://openstreetmap.org">OSM</a> © <a href="https://carto.com">CARTO</a>',
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19,
-    subdomains: 'abcd',
   }).addTo(cityMap);
 
   L.control.zoom({ position: 'bottomright' }).addTo(cityMap);
